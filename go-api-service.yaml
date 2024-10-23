@@ -1,0 +1,41 @@
+apiVersion: v1
+kind: Service
+metadata:
+  annotations: {}
+  labels:
+    app: crbcn-go-api-service
+  name: crbcn-go-api-service
+  namespace: data-api
+spec:
+  ports:
+    - port: 8000
+      protocol: TCP
+      targetPort: 8080
+  selector:
+    app: crbcn-go-api
+---
+apiVersion: networking.k8s.io/v1
+kind: Ingress
+metadata:
+  name: crbcn-go-api-ingress
+  namespace: data-api
+  annotations:
+    nginx.ingress.kubernetes.io/rewrite-target: /
+    cert-manager.io/cluster-issuer: letsencrypt
+spec:
+  ingressClassName: nginx
+  rules:
+  - host: "crbcn-go-api.kube.tech.beegroup-cimne.com"
+    http:
+      paths:
+      - path: /
+        pathType: Prefix
+        backend:
+          service:
+            name: crbcn-go-api-service
+            port:
+              number: 8000
+  tls:
+  - hosts:
+    - "crbcn-go-api.kube.tech.beegroup-cimne.com"
+    secretName: crbcn-tls-secret
