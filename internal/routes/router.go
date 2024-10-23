@@ -8,5 +8,6 @@ import (
 func SetupRouter() *mux.Router {
 	r := mux.NewRouter()
 	r.HandleFunc("/collection", handlers.GetCollectionHandler).Methods("GET")
+	r.HandleFunc("/test", handlers.GetNeo4jTestHandler).Methods("GET")
 	return r
 }
