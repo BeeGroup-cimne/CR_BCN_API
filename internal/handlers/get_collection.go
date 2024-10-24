@@ -3,14 +3,13 @@ package handlers
 import (
 	"context"
 	"encoding/json"
+	"go-api/internal/database"
 	"go-api/internal/models"
+	"go.mongodb.org/mongo-driver/bson"
 	"go.mongodb.org/mongo-driver/mongo"
 	"log"
 	"net/http"
 	"time"
-
-	"go-api/internal/database"
-	"go.mongodb.org/mongo-driver/bson"
 )
 
 // getCollection

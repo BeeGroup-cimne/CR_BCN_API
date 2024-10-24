@@ -10,7 +10,7 @@ import (
 func main() {
 
 	// Conectar a MongoDB
-	database.ConnectMongoDB("")
+	database.ConnectMongoDB()
 
 	r := routes.SetupRouter()
 
