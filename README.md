@@ -6,5 +6,5 @@ cmd/api/main.go
 ## Authors
 - Jose Manuel Broto - jmbroto@cimne.upc.edu
 - Gerard Mor - gmor@cimne.upc.edu
-
-Copyright (c) 2024 Jose Manuel Broto, Gerard Mor
+- Andreu Marí - amari@cimne.upc.edu
+Copyright (c) 2024 Jose Manuel Broto, Gerard Mor, Andreu Marí
