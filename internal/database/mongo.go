@@ -2,7 +2,7 @@ package database
 
 import (
 	"context"
-	"go-api/internal/Environment"
+	"go-api/internal/helpers/env"
 	"log"
 	"time"
 
@@ -14,7 +14,7 @@ var MongoClient *mongo.Client
 
 // ConnectMongoDB
 func ConnectMongoDB() {
-	uri := Environment.GetVar("MONGODB_URI")
+	uri := env.GetVar("MONGODB_URI")
 	ctx, cancel := context.WithTimeout(context.Background(), 10*time.Second)
 	defer cancel()
 

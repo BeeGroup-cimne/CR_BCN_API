@@ -3,7 +3,6 @@ package handlers
 import (
 	"context"
 	"encoding/json"
-	"github.com/neo4j/neo4j-go-driver/v5/neo4j"
 	"go-api/internal/database"
 	"log"
 	"net/http"
@@ -11,12 +10,7 @@ import (
 
 // GetNeo4jTestHandler
 func GetNeo4jTestHandler(w http.ResponseWriter, r *http.Request) {
-	w.Header().Set("Content-Type", "application/json")
-	database.ConnectNeo4j()
-	query := "MATCH (n:s4bldg__Building) RETURN n"
-	session := database.Neo4jDriver.NewSession(context.Background(), neo4j.SessionConfig{})
-	defer session.Close(context.Background())
-	result, err := session.Run(context.Background(), query, nil)
+	result, err := database.RunNeo4jQuery("MATCH (n:s4bldg__Building) RETURN n", nil)
 	if err != nil {
 		log.Fatalf("Query failed: %s", err)
 	}
@@ -53,7 +47,9 @@ func GetNeo4jTestHandler(w http.ResponseWriter, r *http.Request) {
 
 	// Set the content type and send the response
 	w.Header().Set("Content-Type", "application/json")
-	w.Write(jsonResponse)
-
-	database.CloseNeo4j()
+	_, err = w.Write(jsonResponse)
+	if err != nil {
+		http.Error(w, "Failed to write json body in response.", http.StatusInternalServerError)
+		return
+	}
 }
