@@ -2,10 +2,9 @@ package handlers
 
 import (
 	"encoding/json"
-	"fmt"
 	"go-api/internal/helpers/auth"
 	"go-api/internal/helpers/dbOperations"
-	"go-api/internal/helpers/jwt"
+	"go-api/internal/helpers/jwtHelpers"
 	"go-api/internal/helpers/transform"
 	"go-api/internal/helpers/utils"
 	"go-api/internal/models"
@@ -21,7 +20,7 @@ func Login(w http.ResponseWriter, r *http.Request) {
 		http.Error(w, "Invalid request method", http.StatusMethodNotAllowed)
 		return
 	}
-	var usr models.UserLogin
+	var usr models.LoginRequest
 
 	err := json.NewDecoder(r.Body).Decode(&usr)
 	if err != nil {
@@ -31,86 +30,75 @@ func Login(w http.ResponseWriter, r *http.Request) {
 	defer func(Body io.ReadCloser) {
 		err := Body.Close()
 		if err != nil {
-			log.Fatal("Error when closing request json body:", err)
+			log.Print("Error when closing request json body:", err)
+			http.Error(w, "Internal server error", http.StatusInternalServerError)
+			return
 		}
 	}(r.Body)
 
-	neo4jUsr, err := dbOperations.FetchNeo4jUser(usr.Email, usr.Password)
+	neo4jUsr, err := dbOperations.FetchNeo4jUser(usr.Email)
 	if err != nil {
-		log.Fatal("Error fetching dbOperations:", err)
-		//http.Error(w, "Internal server error", http.StatusInternalServerError)
-		//return
-	}
-
-	if !auth.CheckPasswordHash(usr.Password, neo4jUsr.Password) {
-		http.Error(w, "Invalid username or password", http.StatusUnauthorized)
+		log.Print("Error fetching dbOperations:", err)
+		http.Error(w, "Internal server error", http.StatusInternalServerError)
 		return
 	}
 
-	if neo4jUsr.Blocked != nil && *neo4jUsr.Blocked {
-		http.Error(w, "User is blocked", http.StatusUnauthorized)
+	err = auth.UserAuthChecks(neo4jUsr, &usr.Password)
+	if err != nil {
+		http.Error(w, err.Error(), http.StatusUnauthorized)
 		return
 	}
 
-	if neo4jUsr.ExpirationDate != nil && time.Now().UTC().After(transform.ConvertIsoStringToTime(*neo4jUsr.ExpirationDate)) {
-		http.Error(w, "User no longer has access", http.StatusUnauthorized)
-		return
-	}
-
-	if neo4jUsr.StartDate != nil && time.Now().UTC().Before(transform.ConvertIsoStringToTime(*neo4jUsr.StartDate)) {
-		http.Error(w, fmt.Sprintf("User does not have access yet. It will start on %s", *neo4jUsr.StartDate), http.StatusUnauthorized)
-		return
-	}
+	var response *models.LoginResponse
 
 	now := time.Now().UTC()
-	lastConnection := utils.TernaryOperator(neo4jUsr.LastConnectionDate != nil, now, transform.ConvertIsoStringToTime(*neo4jUsr.LastConnectionDate))
+	lastConnection := utils.TernaryOperator(neo4jUsr.LastConnectionDate == nil, now, transform.ConvertIsoStringToTime(transform.ConvertNullableToString(neo4jUsr.LastConnectionDate)))
 	isNewHour := utils.IsEqualDate(lastConnection, now, timePrecision.Hour)
 	isNewDay := utils.IsEqualDate(lastConnection, now, timePrecision.Day)
-	if neo4jUsr.MaxHourlyConnections != nil && neo4jUsr.AccumulatedHourlyConnections != nil && isNewHour && *neo4jUsr.MaxHourlyConnections >= *neo4jUsr.AccumulatedHourlyConnections {
-		http.Error(w, fmt.Sprintf("Access hourly limit of %s reached.", *neo4jUsr.MaxHourlyConnections), http.StatusUnauthorized)
-		return
-	}
-	if neo4jUsr.MaxDailyConnections != nil && neo4jUsr.AccumulatedDailyConnections != nil && isNewDay && *neo4jUsr.MaxDailyConnections >= *neo4jUsr.AccumulatedDailyConnections {
-		http.Error(w, fmt.Sprintf("Access daily limit of %s reached.", *neo4jUsr.MaxDailyConnections), http.StatusUnauthorized)
-		return
-	}
-
-	var response *models.TokensResponse
 
 	//If it doesn't already have a token it generates one
 	if neo4jUsr.Token == nil {
-		newTokens, err := jwt.CreateTokens(neo4jUsr.Email, neo4jUsr.Role)
+		newTokens, err := jwtHelpers.CreateTokens(neo4jUsr.Email, neo4jUsr.Role)
 		if err != nil {
-			log.Fatal("Error creating token:", err)
+			log.Print("Error creating token:", err)
+			http.Error(w, "Internal server error", http.StatusInternalServerError)
+			return
 		}
 		response = newTokens
 	} else {
 		//If it already has a token it decodes it and checks the expiration date
-		claims, err := jwt.DecodeToken(*neo4jUsr.Token)
+		claims, err := jwtHelpers.DecodeToken(*neo4jUsr.Token)
 		if err != nil {
-			log.Fatal("Error decoding token:", err)
+			log.Print("Error decoding token:", err)
+			http.Error(w, "Internal server error", http.StatusInternalServerError)
+			return
 		}
 		//If the token has expired it generates one
 		if claims.ExpiresAt.Before(now) {
-			newTokens, err := jwt.CreateTokens(neo4jUsr.Email, neo4jUsr.Role)
+			newTokens, err := jwtHelpers.CreateTokens(neo4jUsr.Email, neo4jUsr.Role)
 			if err != nil {
-				log.Fatal("Error creating token:", err)
+				log.Print("Error creating token:", err)
+				http.Error(w, "Internal server error", http.StatusInternalServerError)
+				return
 			}
 			response = newTokens
 		} else {
-			//If the token has not expired it gets the token from the db
-			response.Token = *neo4jUsr.Token
-			response.RefreshToken = *neo4jUsr.RefreshToken
+			response = &models.LoginResponse{Token: transform.ConvertNullableToString(neo4jUsr.Token),
+				RefreshToken: transform.ConvertNullableToString(neo4jUsr.RefreshToken)}
 		}
 	}
 	jsonResponse, err := json.Marshal(&response)
 	if err != nil {
-		log.Fatal("Failed to marshal result into JSON: ", err)
+		log.Print("Failed to marshal result into JSON: ", err)
+		http.Error(w, "Internal server error", http.StatusInternalServerError)
+		return
 	}
 
-	err = dbOperations.UpdateVisitCount(*neo4jUsr, response, isNewHour, isNewDay)
+	err = dbOperations.UpdateVisitCount(neo4jUsr, response, isNewHour, isNewDay)
 	if err != nil {
-		log.Fatal("Error updating database: ", err)
+		log.Print("Error updating database: ", err)
+		http.Error(w, "Internal server error", http.StatusInternalServerError)
+		return
 	}
 
 	w.Header().Set("Content-Type", "application/json")

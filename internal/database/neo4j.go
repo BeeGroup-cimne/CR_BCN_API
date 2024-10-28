@@ -8,15 +8,15 @@ import (
 	"time"
 )
 
-func newNeo4jDriver() (neo4j.DriverWithContext, error) {
-	keys := []string{"NEO4J_URI", "NEO4J_USERNAME", "NEO4J_PASSWORD", "NEO4J_TIMEOUT_SECONDS"}
+func NewNeo4jDriver() (neo4j.DriverWithContext, error) {
+	keys := []string{"NEO4J_URI", "NEO4J_USERNAME", "NEO4J_PASSWORD", "NEO4J_TIMEOUT"}
 	vars := env.GetVars(keys)
-	timeout, err := time.ParseDuration(vars["NEO4J_TIMEOUT_SECONDS"])
+	timeout, err := time.ParseDuration(vars["NEO4J_TIMEOUT"])
 	if err != nil {
 		log.Fatal("Invalid token duration:", err)
 		return nil, err
 	}
-	ctx, cancel := context.WithTimeout(context.Background(), timeout*time.Second)
+	ctx, cancel := context.WithTimeout(context.Background(), timeout)
 	defer cancel()
 	uri := vars["NEO4J_URI"]
 	username := vars["NEO4J_USERNAME"]
@@ -33,11 +33,10 @@ func newNeo4jDriver() (neo4j.DriverWithContext, error) {
 		return nil, err
 	}
 
-	log.Println("Connected to Neo4j!")
 	return driver, nil
 }
 
-func closeNeo4jDriver(driver neo4j.DriverWithContext) {
+func CloseNeo4jDriver(driver neo4j.DriverWithContext) {
 	if driver != nil {
 		err := driver.Close(context.Background())
 		if err != nil {
@@ -46,28 +45,11 @@ func closeNeo4jDriver(driver neo4j.DriverWithContext) {
 	}
 }
 
-func closeNeo4jSession(session neo4j.SessionWithContext) {
+func CloseNeo4jSession(session neo4j.SessionWithContext) {
 	if session != nil {
 		err := session.Close(context.Background())
 		if err != nil {
 			log.Fatal("Error closing Neo4j session: ", err)
 		}
 	}
-}
-
-func RunNeo4jQuery(query string, params map[string]interface{}) (neo4j.ResultWithContext, error) {
-	driver, err := newNeo4jDriver()
-	if err != nil {
-		return nil, err
-	}
-	defer closeNeo4jDriver(driver)
-
-	session := driver.NewSession(context.Background(), neo4j.SessionConfig{})
-	defer closeNeo4jSession(session)
-
-	result, err := session.Run(context.Background(), query, params)
-	if err != nil {
-		return nil, err
-	}
-	return result, nil
 }

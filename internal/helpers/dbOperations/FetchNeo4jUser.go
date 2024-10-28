@@ -3,21 +3,34 @@ package dbOperations
 import (
 	"context"
 	"fmt"
+	"github.com/neo4j/neo4j-go-driver/v5/neo4j"
 	"go-api/internal/database"
 	"go-api/internal/helpers/transform"
 	"go-api/internal/models"
 	"strings"
 )
 
-func FetchNeo4jUser(email string, password string) (*models.User, error) {
-	query := "MATCH (n:APIUser) WHERE u.email=$email AND u.password=$password RETURN n {.*, id: id(n)} LIMIT 1"
+type Neo4jResponse struct {
+	User models.User `json:"user"`
+}
+
+func FetchNeo4jUser(email string) (*models.User, error) {
+
+	query := "MATCH (u:APIUser) WHERE u.email=$email RETURN u {.*, id: id(u)} AS user LIMIT 1"
 	params := map[string]interface{}{
-		"email":    strings.ToLower(email),
-		"password": password,
+		"email": strings.ToLower(email),
 	}
 
-	result, err := database.RunNeo4jQuery(query, params)
+	driver, err := database.NewNeo4jDriver()
+	if err != nil {
+		return nil, err
+	}
+	defer database.CloseNeo4jDriver(driver)
 
+	session := driver.NewSession(context.Background(), neo4j.SessionConfig{})
+	defer database.CloseNeo4jSession(session)
+
+	result, err := session.Run(context.Background(), query, params)
 	if err != nil {
 		return nil, err
 	}
@@ -25,44 +38,26 @@ func FetchNeo4jUser(email string, password string) (*models.User, error) {
 	// Extract result and map to struct
 	if result.Next(context.Background()) {
 		record := result.Record()
+		userMap, _ := record.Get("user")
+		data := userMap.(map[string]interface{})
 
-		// Extract fields from the record
-		id, _ := record.Get("id")
-		password, _ := record.Get("password")
-		email, _ := record.Get("email")
-		creationDate, _ := record.Get("creation_date")
-		lastConnectionDate, _ := record.Get("last_connection_date")
-		accumulatedHourlyConnections, _ := record.Get("accumulated_hourly_connections")
-		maxHourlyConnections, _ := record.Get("max_hourly_connections")
-		accumulatedDailyConnections, _ := record.Get("accumulated_daily_connections")
-		maxDailyConnections, _ := record.Get("max_daily_connections")
-		blocked, _ := record.Get("blocked")
-		token, _ := record.Get("token")
-		refreshToken, _ := record.Get("refresh_token")
-		expirationDate, _ := record.Get("expiration_date")
-		startDate, _ := record.Get("start_date")
-		role, _ := record.Get("role")
-
-		// Create a User struct and populate it
-		user := &models.User{
-			Id:                           id.(int),
-			Password:                     password.(string),
-			Email:                        email.(string),
-			CreationDate:                 creationDate.(string),
-			LastConnectionDate:           transform.ConvertToNullableString(lastConnectionDate.(string)),
-			AccumulatedHourlyConnections: transform.ConvertToNullableInt(accumulatedHourlyConnections.(int)),
-			MaxHourlyConnections:         transform.ConvertToNullableInt(maxHourlyConnections.(int)),
-			AccumulatedDailyConnections:  transform.ConvertToNullableInt(accumulatedDailyConnections.(int)),
-			MaxDailyConnections:          transform.ConvertToNullableInt(maxDailyConnections.(int)),
-			Blocked:                      transform.ConvertToNullableBool(blocked.(bool)),
-			Token:                        transform.ConvertToNullableString(token.(string)),
-			RefreshToken:                 transform.ConvertToNullableString(refreshToken.(string)),
-			ExpirationDate:               transform.ConvertToNullableString(expirationDate.(string)),
-			StartDate:                    transform.ConvertToNullableString(startDate.(string)),
-			Role:                         models.UserRoles(role.(string)),
-		}
-
-		return user, nil
+		return &models.User{
+			Id:                           int(data["id"].(int64)),
+			Password:                     data["password"].(string),
+			Email:                        data["email"].(string),
+			CreationDate:                 data["creation_date"].(string),
+			Role:                         models.UserRoles(data["role"].(string)),
+			LastConnectionDate:           transform.ConvertToNullableString(data["last_connection_date"]),
+			AccumulatedHourlyConnections: transform.ConvertToNullableInt(data["accumulated_hourly_connections"]),
+			MaxHourlyConnections:         transform.ConvertToNullableInt(data["max_hourly_connections"]),
+			AccumulatedDailyConnections:  transform.ConvertToNullableInt(data["accumulated_daily_connections"]),
+			MaxDailyConnections:          transform.ConvertToNullableInt(data["max_daily_connections"]),
+			Blocked:                      transform.ConvertToNullableBool(data["blocked"]),
+			Token:                        transform.ConvertToNullableString(data["token"]),
+			RefreshToken:                 transform.ConvertToNullableString(data["refresh_token"]),
+			ExpirationDate:               transform.ConvertToNullableString(data["expiration_date"]),
+			StartDate:                    transform.ConvertToNullableString(data["start_date"]),
+		}, nil
 	}
 
 	if err = result.Err(); err != nil {
