@@ -1,8 +1,9 @@
-package auth
+package checks
 
 import (
 	"errors"
 	"fmt"
+	"go-api/internal/helpers/security/password"
 	"go-api/internal/helpers/transform"
 	"go-api/internal/helpers/utils"
 	"go-api/internal/models"
@@ -13,7 +14,7 @@ import (
 
 func UserAuthChecks(user *models.User, pwd *string) error {
 	if pwd != nil {
-		if !CheckPasswordHash(*pwd, user.Password) {
+		if !password.CheckPasswordHash(*pwd, user.Password) {
 			return errors.New("invalid username or password")
 		}
 	}

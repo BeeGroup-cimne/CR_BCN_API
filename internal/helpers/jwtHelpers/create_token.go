@@ -7,23 +7,23 @@ import (
 	"go-api/internal/models"
 	"go-api/internal/models/enums/jwtType"
 	"go-api/internal/models/enums/userRoles"
+	"strconv"
 	"time"
 )
 
-func CreateTokens(email string, role models.UserRoles) (*models.LoginResponse, error) {
+func CreateTokens(email string, role models.UserRoles, id int) (*string, *string, error) {
 	jwtKey := []byte(env.GetVar("SECRET_KEY"))
 	JwtAdmDuration, err := time.ParseDuration(env.GetVar("JWT_ADM_DURATION"))
 	if err != nil {
-		return nil, err
+		return nil, nil, err
 	}
 	JwtUsrDuration, err := time.ParseDuration(env.GetVar("JWT_USR_DURATION"))
 	rJwtUsrDuration, err := time.ParseDuration(env.GetVar("R_JWT_USR_DURATION"))
 
 	if err != nil {
-		return nil, err
+		return nil, nil, err
 	}
 	timespan := utils.TernaryOperator(role != userRoles.Registered, JwtAdmDuration, JwtUsrDuration)
-	rTimespan := utils.TernaryOperator(role != userRoles.Registered, JwtAdmDuration, rJwtUsrDuration)
 	expirationTime := time.Now().UTC().Add(timespan)
 	claims := &models.JwtClaims{
 		Email: email,
@@ -32,14 +32,16 @@ func CreateTokens(email string, role models.UserRoles) (*models.LoginResponse, e
 		RegisteredClaims: jwt.RegisteredClaims{
 			ExpiresAt: jwt.NewNumericDate(expirationTime),
 			IssuedAt:  jwt.NewNumericDate(time.Now().UTC()),
+			ID:        strconv.Itoa(id),
 		},
 	}
 	token := jwt.NewWithClaims(jwt.SigningMethodHS256, claims)
 	tokenString, err := token.SignedString(jwtKey)
 	if err != nil {
-		return nil, err
+		return nil, nil, err
 	}
 
+	rTimespan := utils.TernaryOperator(role != userRoles.Registered, JwtAdmDuration, rJwtUsrDuration)
 	rExpirationTime := time.Now().UTC().Add(rTimespan)
 	rClaims := &models.JwtClaims{
 		Email: email,
@@ -48,16 +50,14 @@ func CreateTokens(email string, role models.UserRoles) (*models.LoginResponse, e
 		RegisteredClaims: jwt.RegisteredClaims{
 			ExpiresAt: jwt.NewNumericDate(rExpirationTime),
 			IssuedAt:  jwt.NewNumericDate(time.Now().UTC()),
+			ID:        strconv.Itoa(id),
 		},
 	}
 	rToken := jwt.NewWithClaims(jwt.SigningMethodHS256, rClaims)
 	rTokenString, rErr := rToken.SignedString(jwtKey)
 	if rErr != nil {
-		return nil, rErr
+		return nil, nil, rErr
 	}
 
-	return &models.LoginResponse{
-		Token:        tokenString,
-		RefreshToken: rTokenString,
-	}, nil
+	return &tokenString, &rTokenString, nil
 }

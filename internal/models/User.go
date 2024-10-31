@@ -11,6 +11,7 @@ type User struct {
 	MaxHourlyConnections         *int      `json:"max_hourly_connections"`
 	AccumulatedDailyConnections  *int      `json:"accumulated_daily_connections"`
 	MaxDailyConnections          *int      `json:"max_daily_connections"`
+	AccumulatedTotalConnections  *int      `json:"accumulated_total_connections"`
 	Blocked                      *bool     `json:"blocked"`
 	Token                        *string   `json:"token"`
 	RefreshToken                 *string   `json:"refresh_token"`

@@ -1,13 +1,15 @@
-package auth
+package middleware
 
 import (
 	"context"
 	"go-api/internal/helpers/jwtHelpers"
+	"go-api/internal/models/enums/jwtType"
+	"go-api/internal/models/enums/userRoles"
 	"net/http"
 	"strings"
 )
 
-func JWTAuthMiddleware(next http.Handler) http.Handler {
+func AdminMiddleware(next http.Handler) http.Handler {
 	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 		authHeader := r.Header.Get("Authorization")
 		if authHeader == "" {
@@ -22,18 +24,20 @@ func JWTAuthMiddleware(next http.Handler) http.Handler {
 		}
 
 		claims, err := jwtHelpers.DecodeToken(tokenString)
-
 		if err != nil {
 			http.Error(w, "Invalid token", http.StatusUnauthorized)
 			return
 		}
 
-		//user, err := dbOperations.FetchNeo4jUser(claims.Email)
-		//if err != nil {
-		//	http.Error(w, "User not found", http.StatusUnauthorized)
-		//	return
-		//}
-		//ctx := context.WithValue(r.Context(), "user", user)
+		if claims.Role != userRoles.Admin {
+			http.Error(w, "User does not have enough permissions", http.StatusUnauthorized)
+			return
+		}
+
+		if claims.Type != jwtType.Access {
+			http.Error(w, "Invalid token type", http.StatusUnauthorized)
+			return
+		}
 
 		ctx := context.WithValue(r.Context(), "claims", claims)
 		next.ServeHTTP(w, r.WithContext(ctx))

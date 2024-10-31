@@ -1,14 +1,12 @@
-package handlers
+package auth
 
 import (
 	"encoding/json"
-	"go-api/internal/helpers/auth"
-	"go-api/internal/helpers/dbOperations"
+	"go-api/internal/helpers/db/neo4jOperations"
 	"go-api/internal/helpers/jwtHelpers"
+	"go-api/internal/helpers/security/checks"
 	"go-api/internal/helpers/transform"
-	"go-api/internal/helpers/utils"
 	"go-api/internal/models"
-	"go-api/internal/models/enums/timePrecision"
 	"io"
 	"log"
 	"net/http"
@@ -36,35 +34,45 @@ func Login(w http.ResponseWriter, r *http.Request) {
 		}
 	}(r.Body)
 
-	neo4jUsr, err := dbOperations.FetchNeo4jUser(usr.Email)
+	neo4jUsr, err := neo4jOperations.GetUser(usr.Email)
 	if err != nil {
-		log.Print("Error fetching dbOperations:", err)
+		log.Print("Error fetching db:", err)
 		http.Error(w, "Internal server error", http.StatusInternalServerError)
 		return
 	}
 
-	err = auth.UserAuthChecks(neo4jUsr, &usr.Password)
+	err = checks.UserAuthChecks(neo4jUsr, &usr.Password)
 	if err != nil {
 		http.Error(w, err.Error(), http.StatusUnauthorized)
+		return
+	}
+
+	err = neo4jOperations.UpdateVisitCount(neo4jUsr.Id, neo4jUsr.LastConnectionDate)
+	if err != nil {
+		log.Print("Error updating database: ", err)
+		http.Error(w, "Internal server error", http.StatusInternalServerError)
 		return
 	}
 
 	var response *models.LoginResponse
 
 	now := time.Now().UTC()
-	lastConnection := utils.TernaryOperator(neo4jUsr.LastConnectionDate == nil, now, transform.ConvertIsoStringToTime(transform.ConvertNullableToString(neo4jUsr.LastConnectionDate)))
-	isNewHour := utils.IsEqualDate(lastConnection, now, timePrecision.Hour)
-	isNewDay := utils.IsEqualDate(lastConnection, now, timePrecision.Day)
 
 	//If it doesn't already have a token it generates one
 	if neo4jUsr.Token == nil {
-		newTokens, err := jwtHelpers.CreateTokens(neo4jUsr.Email, neo4jUsr.Role)
+		token, refreshToken, err := jwtHelpers.CreateTokens(neo4jUsr.Email, neo4jUsr.Role, neo4jUsr.Id)
 		if err != nil {
 			log.Print("Error creating token:", err)
 			http.Error(w, "Internal server error", http.StatusInternalServerError)
 			return
 		}
-		response = newTokens
+		response = &models.LoginResponse{Token: *token, RefreshToken: *refreshToken}
+		err = neo4jOperations.UpdateUserTokens(neo4jUsr.Id, response.Token, response.RefreshToken)
+		if err != nil {
+			log.Print("Error updating database: ", err)
+			http.Error(w, "Internal server error", http.StatusInternalServerError)
+			return
+		}
 	} else {
 		//If it already has a token it decodes it and checks the expiration date
 		claims, err := jwtHelpers.DecodeToken(*neo4jUsr.Token)
@@ -75,13 +83,19 @@ func Login(w http.ResponseWriter, r *http.Request) {
 		}
 		//If the token has expired it generates one
 		if claims.ExpiresAt.Before(now) {
-			newTokens, err := jwtHelpers.CreateTokens(neo4jUsr.Email, neo4jUsr.Role)
+			token, refreshToken, err := jwtHelpers.CreateTokens(neo4jUsr.Email, neo4jUsr.Role, neo4jUsr.Id)
 			if err != nil {
 				log.Print("Error creating token:", err)
 				http.Error(w, "Internal server error", http.StatusInternalServerError)
 				return
 			}
-			response = newTokens
+			response = &models.LoginResponse{Token: *token, RefreshToken: *refreshToken}
+			err = neo4jOperations.UpdateUserTokens(neo4jUsr.Id, response.Token, response.RefreshToken)
+			if err != nil {
+				log.Print("Error updating database: ", err)
+				http.Error(w, "Internal server error", http.StatusInternalServerError)
+				return
+			}
 		} else {
 			response = &models.LoginResponse{Token: transform.ConvertNullableToString(neo4jUsr.Token),
 				RefreshToken: transform.ConvertNullableToString(neo4jUsr.RefreshToken)}
@@ -90,13 +104,6 @@ func Login(w http.ResponseWriter, r *http.Request) {
 	jsonResponse, err := json.Marshal(&response)
 	if err != nil {
 		log.Print("Failed to marshal result into JSON: ", err)
-		http.Error(w, "Internal server error", http.StatusInternalServerError)
-		return
-	}
-
-	err = dbOperations.UpdateVisitCount(neo4jUsr, response, isNewHour, isNewDay)
-	if err != nil {
-		log.Print("Error updating database: ", err)
 		http.Error(w, "Internal server error", http.StatusInternalServerError)
 		return
 	}

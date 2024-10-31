@@ -1,4 +1,4 @@
-package dbOperations
+package neo4jOperations
 
 import (
 	"context"
@@ -10,15 +10,26 @@ import (
 	"strings"
 )
 
-type Neo4jResponse struct {
-	User models.User `json:"user"`
-}
+func GetUser(value interface{}) (*models.User, error) {
 
-func FetchNeo4jUser(email string) (*models.User, error) {
+	query := "MATCH (u:APIUser) WHERE u.email=$email OR id(u)=$id RETURN u {.*, id: id(u)} AS user LIMIT 1"
+	var id int
+	var email string
 
-	query := "MATCH (u:APIUser) WHERE u.email=$email RETURN u {.*, id: id(u)} AS user LIMIT 1"
+	switch value.(type) {
+	case int:
+		id = value.(int)
+		break
+	case string:
+		email = strings.ToLower(value.(string))
+		break
+	default:
+		return nil, fmt.Errorf("value must be either an email(string) or id(int)")
+	}
+
 	params := map[string]interface{}{
-		"email": strings.ToLower(email),
+		"id":    id,
+		"email": email,
 	}
 
 	driver, err := database.NewNeo4jDriver()
@@ -35,7 +46,6 @@ func FetchNeo4jUser(email string) (*models.User, error) {
 		return nil, err
 	}
 
-	// Extract result and map to struct
 	if result.Next(context.Background()) {
 		record := result.Record()
 		userMap, _ := record.Get("user")
@@ -52,6 +62,7 @@ func FetchNeo4jUser(email string) (*models.User, error) {
 			MaxHourlyConnections:         transform.ConvertToNullableInt(data["max_hourly_connections"]),
 			AccumulatedDailyConnections:  transform.ConvertToNullableInt(data["accumulated_daily_connections"]),
 			MaxDailyConnections:          transform.ConvertToNullableInt(data["max_daily_connections"]),
+			AccumulatedTotalConnections:  transform.ConvertToNullableInt(data["accumulated_total_connections"]),
 			Blocked:                      transform.ConvertToNullableBool(data["blocked"]),
 			Token:                        transform.ConvertToNullableString(data["token"]),
 			RefreshToken:                 transform.ConvertToNullableString(data["refresh_token"]),
@@ -64,5 +75,5 @@ func FetchNeo4jUser(email string) (*models.User, error) {
 		return nil, err
 	}
 
-	return nil, fmt.Errorf("dbOperations not found")
+	return nil, fmt.Errorf("user not found")
 }
