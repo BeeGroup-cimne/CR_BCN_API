@@ -37,7 +37,7 @@ func Post(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	err = neo4jOperations.CreateUser(user)
+	id, err := neo4jOperations.CreateUser(user)
 	if err != nil {
 		log.Print("Error fetching db:", err)
 		http.Error(w, "Internal server error", http.StatusInternalServerError)
@@ -46,7 +46,7 @@ func Post(w http.ResponseWriter, r *http.Request) {
 
 	result := models.Message{
 		Status:  "OK",
-		Message: "User created",
+		Message: *id,
 	}
 
 	jsonResponse, err := json.Marshal(result)

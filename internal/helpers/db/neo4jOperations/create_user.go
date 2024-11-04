@@ -11,43 +11,47 @@ import (
 	"time"
 )
 
-func CreateUser(user models.CreateUserRequest) error {
+func CreateUser(user models.CreateUserRequest) (*string, error) {
 	hash, err := password.HashPassword(user.Password)
 	if err != nil {
-		return err
+		return nil, err
 	}
 	params := map[string]interface{}{
-		"email":         strings.ToLower(user.Email),
-		"password":      hash,
-		"creation_date": time.Now().UTC().Format(time.RFC3339),
-		"role":          user.Role,
+		"email":                          strings.ToLower(user.Email),
+		"password":                       hash,
+		"creation_date":                  time.Now().UTC().Format(time.RFC3339),
+		"role":                           user.Role,
+		"accumulated_hourly_connections": 0,
+		"accumulated_daily_connections":  0,
+		"accumulated_total_connections":  0,
 	}
-	var strParams string
 	if user.MaxHourlyConnections != nil {
-		strParams += ", max_hourly_connections:$max_hourly_connections"
 		params["max_hourly_connections"] = *user.MaxHourlyConnections
 	}
 	if user.MaxDailyConnections != nil {
-		strParams += ", max_daily_connections:$max_daily_connections"
 		params["max_daily_connections"] = *user.MaxDailyConnections
 	}
 	if user.Blocked != nil {
-		strParams += ", blocked:$blocked"
 		params["blocked"] = *user.Blocked
 	}
 	if user.ExpirationDate != nil {
-		strParams += ", expiration_date:$expiration_date"
 		params["expiration_date"] = *user.ExpirationDate
 	}
 	if user.StartDate != nil {
-		strParams += ", start_date:$start_date"
 		params["start_date"] = *user.StartDate
 	}
-	query := fmt.Sprintf("CREATE (u:APIUser{email:$email, password:$password, creation_date:$creation_date, role:$role, accumulated_hourly_connections: 0, accumulated_daily_connections: 0, accumulated_total_connections: 0%s})", strParams)
+
+	keys := make([]string, 0, len(params))
+	for key := range params {
+		keys = append(keys, "u."+key+"=$"+key)
+	}
+	strParams := "SET " + strings.Join(keys, ", ")
+
+	query := fmt.Sprintf("CREATE (u:APIUser) %s RETURN id(u) AS id", strParams)
 
 	driver, err := database.NewNeo4jDriver()
 	if err != nil {
-		return err
+		return nil, err
 	}
 	defer database.CloseNeo4jDriver(driver)
 
@@ -56,10 +60,18 @@ func CreateUser(user models.CreateUserRequest) error {
 
 	result, err := session.Run(context.Background(), query, params)
 	if err != nil {
-		return fmt.Errorf("query execution failed: %w", err)
+		return nil, fmt.Errorf("query execution failed: %w", err)
 	}
 	if result.Err() != nil {
-		return fmt.Errorf("error iterating results: %w", result.Err())
+		return nil, fmt.Errorf("error iterating results: %w", result.Err())
 	}
-	return nil
+
+	if result.Next(context.Background()) {
+		record := result.Record()
+		id, _ := record.Get("id")
+		idStr := fmt.Sprintf("%v", id)
+		return &idStr, nil
+	} else {
+		return nil, fmt.Errorf("query execution failed: %w", err)
+	}
 }

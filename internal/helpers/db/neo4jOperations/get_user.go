@@ -75,5 +75,5 @@ func GetUser(value interface{}) (*models.User, error) {
 		return nil, err
 	}
 
-	return nil, fmt.Errorf("user not found")
+	return nil, nil
 }
