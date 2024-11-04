@@ -36,6 +36,8 @@ func DataMiddleware(next http.Handler) http.Handler {
 			return
 		}
 
+		// TODO: MIDDLEWARE CONTENT FOR DATA ENDPOINTS
+
 		next.ServeHTTP(w, r.WithContext(ctx))
 	})
 }

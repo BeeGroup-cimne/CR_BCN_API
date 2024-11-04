@@ -23,17 +23,9 @@ func UpdateUserTokens(id int, token string, refreshToken string) error {
 	session := driver.NewSession(context.Background(), neo4j.SessionConfig{})
 	defer database.CloseNeo4jSession(session)
 
-	result, err := session.Run(context.Background(), query, params)
+	_, err = session.Run(context.Background(), query, params)
 	if err != nil {
 		return fmt.Errorf("query execution failed: %w", err)
 	}
-
-	if !result.Next(context.Background()) {
-		if result.Err() != nil {
-			return fmt.Errorf("error iterating results: %w", result.Err())
-		}
-		return fmt.Errorf("user not found with id: %d", id)
-	}
-
 	return nil
 }
