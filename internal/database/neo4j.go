@@ -3,18 +3,20 @@ package database
 import (
 	"context"
 	"github.com/neo4j/neo4j-go-driver/v5/neo4j"
-	"go-api/internal/Environment"
+	"go-api/internal/helpers/env"
 	"log"
 	"time"
 )
 
-var Neo4jDriver neo4j.DriverWithContext
-
-func ConnectNeo4j() {
-	keys := []string{"NEO4J_URI", "NEO4J_USERNAME", "NEO4J_PASSWORD"}
-	vars := Environment.GetVars(keys)
-
-	ctx, cancel := context.WithTimeout(context.Background(), 10*time.Second)
+func NewNeo4jDriver() (neo4j.DriverWithContext, error) {
+	keys := []string{"NEO4J_URI", "NEO4J_USERNAME", "NEO4J_PASSWORD", "NEO4J_TIMEOUT"}
+	vars := env.GetVars(keys)
+	timeout, err := time.ParseDuration(vars["NEO4J_TIMEOUT"])
+	if err != nil {
+		log.Fatal("Invalid token duration:", err)
+		return nil, err
+	}
+	ctx, cancel := context.WithTimeout(context.Background(), timeout)
 	defer cancel()
 	uri := vars["NEO4J_URI"]
 	username := vars["NEO4J_USERNAME"]
@@ -22,44 +24,32 @@ func ConnectNeo4j() {
 	driver, err := neo4j.NewDriverWithContext(uri, neo4j.BasicAuth(username, password, ""))
 	if err != nil {
 		log.Fatal("Error connecting to Neo4j: ", err)
+		return nil, err
 	}
 
 	err = driver.VerifyConnectivity(ctx)
 	if err != nil {
 		log.Fatal("Error pinging Neo4j: ", err)
+		return nil, err
 	}
 
-	Neo4jDriver = driver
-	log.Println("Connected to Neo4j!")
+	return driver, nil
 }
 
-func CloseNeo4j() {
-	if Neo4jDriver != nil {
-		err := Neo4jDriver.Close(context.Background())
+func CloseNeo4jDriver(driver neo4j.DriverWithContext) {
+	if driver != nil {
+		err := driver.Close(context.Background())
 		if err != nil {
 			log.Fatal("Error closing Neo4j connection: ", err)
 		}
-		log.Println("Disconnected from Neo4j!")
 	}
 }
 
-func RunNeo4jQuery(query string) neo4j.ResultWithContext {
-	if Neo4jDriver == nil {
-		ConnectNeo4j()
+func CloseNeo4jSession(session neo4j.SessionWithContext) {
+	if session != nil {
+		err := session.Close(context.Background())
+		if err != nil {
+			log.Fatal("Error closing Neo4j session: ", err)
+		}
 	}
-	session := Neo4jDriver.NewSession(context.Background(), neo4j.SessionConfig{})
-	defer session.Close(context.Background())
-	result, err := session.Run(context.Background(), query, nil)
-	if err != nil {
-		log.Fatalf("Query failed: %s", err)
-	}
-	if result.Next(context.Background()) {
-		return result
-	}
-
-	if err := result.Err(); err != nil {
-		log.Fatalf("Result error: %s", err)
-	}
-
-	return nil
 }

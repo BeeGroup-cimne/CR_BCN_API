@@ -1,0 +1,45 @@
+package middleware
+
+import (
+	"context"
+	"go-api/internal/helpers/jwtHelpers"
+	"go-api/internal/models/enums/jwtType"
+	"go-api/internal/models/enums/userRoles"
+	"net/http"
+	"strings"
+)
+
+func AdminMiddleware(next http.Handler) http.Handler {
+	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		authHeader := r.Header.Get("Authorization")
+		if authHeader == "" {
+			http.Error(w, "Missing Authorization header", http.StatusUnauthorized)
+			return
+		}
+
+		tokenString := strings.TrimPrefix(authHeader, "Bearer ")
+		if tokenString == authHeader {
+			http.Error(w, "Malformed Authorization header", http.StatusUnauthorized)
+			return
+		}
+
+		claims, err := jwtHelpers.DecodeToken(tokenString)
+		if err != nil {
+			http.Error(w, "Invalid token", http.StatusUnauthorized)
+			return
+		}
+
+		if claims.Role != userRoles.Admin {
+			http.Error(w, "User does not have enough permissions", http.StatusUnauthorized)
+			return
+		}
+
+		if claims.Type != jwtType.Access {
+			http.Error(w, "Invalid token type", http.StatusUnauthorized)
+			return
+		}
+
+		ctx := context.WithValue(r.Context(), "claims", claims)
+		next.ServeHTTP(w, r.WithContext(ctx))
+	})
+}
