@@ -7,7 +7,7 @@ metadata:
   name: crbcn-go-deployment
   namespace: data-api
 spec:
-  replicas: 2
+  replicas: 1
   selector:
     matchLabels:
       app: crbcn-go-api
@@ -18,6 +18,40 @@ spec:
       labels:
         app: crbcn-go-api
     spec:
+      hostAliases:
+        - ip: "10.0.88.76"
+          hostnames:
+            - "master1.internal"
+        - ip: "10.0.87.95"
+          hostnames:
+            - "master2.internal"
+        - ip: "10.0.88.132"
+          hostnames:
+            - "worker1.internal"
+        - ip: "10.0.86.33"
+          hostnames:
+            - "worker2.internal"
+        - ip: "10.0.87.145"
+          hostnames:
+            - "worker3.internal"
+        - ip: "10.0.86.214"
+          hostnames:
+            - "worker4.internal"
+        - ip: "10.0.129.220"
+          hostnames:
+            - "kafka1.internal"
+        - ip: "10.0.88.152"
+          hostnames:
+            - "druid-1.internal"
+        - ip: "51.210.38.138"
+          hostnames:
+            - "database3-vpn"
+        - ip: "51.210.36.240"
+          hostnames:
+            - "database2-vpn"
+        - ip: "51.210.36.88"
+          hostnames:
+            - "database1-vpn"
       containers:
         - name: crbcn-go-api
           image: docker.tech.beegroup-cimne.com/crbcn_api/go-api:latest
