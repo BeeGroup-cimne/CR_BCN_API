@@ -13,7 +13,7 @@ func SetupRouter() *mux.Router {
 	r := mux.NewRouter()
 	dataRoutes := r.PathPrefix("/data").Subrouter()
 	dataRoutes.Use(middleware.DataMiddleware)
-	dataRoutes.HandleFunc("/collection", data.GetCollectionHandler).Methods(http.MethodGet)
+	dataRoutes.HandleFunc("/collection/{collection_name}", data.GetCollectionHandler).Methods(http.MethodGet)
 
 	authRoutes := r.PathPrefix("/auth").Subrouter()
 	authRoutes.HandleFunc("/login", auth.Login).Methods(http.MethodPost)
