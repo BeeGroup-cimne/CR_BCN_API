@@ -3,6 +3,7 @@ package data
 import (
 	"context"
 	"encoding/json"
+	"github.com/gorilla/mux"
 	"go-api/internal/database"
 	"go-api/internal/models"
 	"go.mongodb.org/mongo-driver/bson"
@@ -16,7 +17,15 @@ import (
 func GetCollectionHandler(w http.ResponseWriter, r *http.Request) {
 	w.Header().Set("Content-Type", "application/json")
 
-	collection := database.MongoClient.Database("r1db").Collection("grossFloorArea")
+	if r.Method != http.MethodGet {
+		http.Error(w, "Invalid request method", http.StatusMethodNotAllowed)
+		return
+	}
+
+	vars := mux.Vars(r)
+	collection_name := vars["collection_name"]
+
+	collection := database.MongoClient.Database("r1db").Collection(collection_name)
 
 	ctx, cancel := context.WithTimeout(context.Background(), 30*time.Second)
 	defer cancel()
@@ -24,7 +33,7 @@ func GetCollectionHandler(w http.ResponseWriter, r *http.Request) {
 	// query
 	cursor, err := collection.Find(ctx, bson.M{})
 	if err != nil {
-		http.Error(w, "Error al realizar la consulta a MongoDB", http.StatusInternalServerError)
+		http.Error(w, "Error when querying DB", http.StatusInternalServerError)
 		return
 	}
 	defer func(cursor *mongo.Cursor, ctx context.Context) {
@@ -62,6 +71,6 @@ func GetCollectionHandler(w http.ResponseWriter, r *http.Request) {
 
 	// Codificamos los resultados como JSON y los enviamos
 	if err := json.NewEncoder(w).Encode(results); err != nil {
-		http.Error(w, "Error al codificar la respuesta en JSON", http.StatusInternalServerError)
+		http.Error(w, "Error encoding response in JSON", http.StatusInternalServerError)
 	}
 }
