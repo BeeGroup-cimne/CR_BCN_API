@@ -25,7 +25,7 @@ func GetCollectionHandler(w http.ResponseWriter, r *http.Request) {
 	vars := mux.Vars(r)
 	collection_name := vars["collection_name"]
 
-	collection := database.MongoClient.Database("r1db").Collection(collection_name)
+	collection := database.MongoClient.Database("cr_bcn_kpis").Collection(collection_name)
 
 	ctx, cancel := context.WithTimeout(context.Background(), 30*time.Second)
 	defer cancel()
