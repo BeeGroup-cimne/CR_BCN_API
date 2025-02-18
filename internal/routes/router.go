@@ -11,9 +11,14 @@ import (
 
 func SetupRouter() *mux.Router {
 	r := mux.NewRouter()
+
+	r.Use(middleware.CorsMiddleware)
+
 	dataRoutes := r.PathPrefix("/data").Subrouter()
 	dataRoutes.Use(middleware.DataMiddleware)
+	dataRoutes.HandleFunc("/climate_communications", data.GetClimateCommunicationsHandler).Methods(http.MethodGet)
 	dataRoutes.HandleFunc("/collection/{collection_name}", data.GetCollectionHandler).Methods(http.MethodGet)
+	dataRoutes.HandleFunc("/collection/indicators/{lang}", data.GetIndicatorsHandler).Methods(http.MethodGet)
 
 	authRoutes := r.PathPrefix("/auth").Subrouter()
 	authRoutes.HandleFunc("/login", auth.Login).Methods(http.MethodPost)
@@ -25,6 +30,9 @@ func SetupRouter() *mux.Router {
 	userRoutes.HandleFunc("/{id}", user.Get).Methods(http.MethodGet)
 	userRoutes.HandleFunc("/{id}/update", user.Put).Methods(http.MethodPut)
 	userRoutes.HandleFunc("/{id}/delete", user.Delete).Methods(http.MethodDelete)
+
+	fs := http.FileServer(http.Dir("./static"))
+	r.PathPrefix("/").Handler(fs)
 
 	return r
 }
