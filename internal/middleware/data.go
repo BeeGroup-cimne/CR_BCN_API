@@ -29,8 +29,6 @@ func DataMiddleware(next http.Handler) http.Handler {
 			return
 		}
 
-		ctx := context.WithValue(r.Context(), "claims", claims)
-
 		if claims.Type != jwtType.Access {
 			http.Error(w, "Invalid token type", http.StatusUnauthorized)
 			return
@@ -38,6 +36,7 @@ func DataMiddleware(next http.Handler) http.Handler {
 
 		// TODO: MIDDLEWARE CONTENT FOR DATA ENDPOINTS
 
+		ctx := context.WithValue(r.Context(), "claims", claims)
 		next.ServeHTTP(w, r.WithContext(ctx))
 	})
 }
