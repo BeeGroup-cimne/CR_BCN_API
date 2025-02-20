@@ -1,9 +1,7 @@
 package auth
 
 import (
-	"encoding/json"
 	"go-api/internal/helpers/db/neo4jOperations"
-	"go-api/internal/helpers/jwtHelpers"
 	"go-api/internal/helpers/security/checks"
 	"go-api/internal/models"
 	"log"
@@ -42,24 +40,8 @@ func RefreshToken(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	token, refreshToken, err := jwtHelpers.CreateTokens(neo4jUsr.Email, neo4jUsr.Role, neo4jUsr.Id)
+	jsonResponse, err := CreateTokensWrapper(neo4jUsr)
 	if err != nil {
-		log.Print("Error creating token:", err)
-		http.Error(w, "Internal server error", http.StatusInternalServerError)
-		return
-	}
-	response := models.LoginResponse{Token: *token, RefreshToken: *refreshToken}
-
-	err = neo4jOperations.UpdateUserTokens(neo4jUsr.Id, response.Token, response.RefreshToken)
-	if err != nil {
-		log.Print("Error updating database: ", err)
-		http.Error(w, "Internal server error", http.StatusInternalServerError)
-		return
-	}
-
-	jsonResponse, err := json.Marshal(response)
-	if err != nil {
-		log.Print("Failed to marshal result into JSON: ", err)
 		http.Error(w, "Internal server error", http.StatusInternalServerError)
 		return
 	}

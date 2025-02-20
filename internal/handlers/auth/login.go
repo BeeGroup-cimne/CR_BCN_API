@@ -26,86 +26,77 @@ func Login(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 	defer func(Body io.ReadCloser) {
-		err := Body.Close()
-		if err != nil {
-			log.Print("Error when closing request json body:", err)
+		errB := Body.Close()
+		if errB != nil {
+			log.Print("Error when closing request json body:", errB)
 			http.Error(w, "Internal server error", http.StatusInternalServerError)
 			return
 		}
 	}(r.Body)
 
-	neo4jUsr, err := neo4jOperations.GetUser(usr.Email)
-	if err != nil {
-		log.Print("Error fetching db:", err)
+	neo4jUsr, errUsr := neo4jOperations.GetUser(usr.Email)
+	if errUsr != nil {
+		log.Print("Error fetching db:", errUsr)
 		http.Error(w, "Internal server error", http.StatusInternalServerError)
 		return
 	}
 
-	err = checks.UserAuthChecks(neo4jUsr, &usr.Password)
-	if err != nil {
-		http.Error(w, err.Error(), http.StatusUnauthorized)
+	errAuth := checks.UserAuthChecks(neo4jUsr, &usr.Password)
+	if errAuth != nil {
+		http.Error(w, errAuth.Error(), http.StatusUnauthorized)
 		return
 	}
 
-	err = neo4jOperations.UpdateVisitCount(neo4jUsr.Id, neo4jUsr.LastConnectionDate)
-	if err != nil {
-		log.Print("Error updating database: ", err)
+	errDb := neo4jOperations.UpdateVisitCount(neo4jUsr.Id, neo4jUsr.LastConnectionDate)
+	if errDb != nil {
+		log.Print("Error updating database: ", errDb)
 		http.Error(w, "Internal server error", http.StatusInternalServerError)
 		return
 	}
 
-	var response *models.LoginResponse
-
+	var jsonResponse []byte
+	var errCreateToken error
 	now := time.Now().UTC()
 
 	//If it doesn't already have a token it generates one
 	if neo4jUsr.Token == nil {
-		token, refreshToken, err := jwtHelpers.CreateTokens(neo4jUsr.Email, neo4jUsr.Role, neo4jUsr.Id)
-		if err != nil {
-			log.Print("Error creating token:", err)
+		jsonResponse, errCreateToken = CreateTokensWrapper(neo4jUsr)
+		if errCreateToken != nil {
 			http.Error(w, "Internal server error", http.StatusInternalServerError)
-			return
-		}
-		response = &models.LoginResponse{Token: *token, RefreshToken: *refreshToken}
-		err = neo4jOperations.UpdateUserTokens(neo4jUsr.Id, response.Token, response.RefreshToken)
-		if err != nil {
-			log.Print("Error updating database: ", err)
-			http.Error(w, "Internal server error", http.StatusInternalServerError)
-			return
 		}
 	} else {
-		//If it already has a token it decodes it and checks the expiration date
-		claims, err := jwtHelpers.DecodeToken(*neo4jUsr.Token)
-		if err != nil {
-			log.Print("Error decoding token:", err)
+		claims, errC := jwtHelpers.DecodeToken(*neo4jUsr.Token)
+		if errC != nil {
+			log.Print("Error decoding token:", errC)
+			http.Error(w, "Internal server error", http.StatusInternalServerError)
+			return
+		}
+		rClaims, errRC := jwtHelpers.DecodeToken(*neo4jUsr.RefreshToken)
+		if errRC != nil {
+			log.Print("Error decoding refresh token:", errRC)
 			http.Error(w, "Internal server error", http.StatusInternalServerError)
 			return
 		}
 		//If the token has expired it generates one
 		if claims.ExpiresAt.Before(now) {
-			token, refreshToken, err := jwtHelpers.CreateTokens(neo4jUsr.Email, neo4jUsr.Role, neo4jUsr.Id)
-			if err != nil {
-				log.Print("Error creating token:", err)
+			jsonResponse, errCreateToken = CreateTokensWrapper(neo4jUsr)
+			if errCreateToken != nil {
 				http.Error(w, "Internal server error", http.StatusInternalServerError)
-				return
-			}
-			response = &models.LoginResponse{Token: *token, RefreshToken: *refreshToken}
-			err = neo4jOperations.UpdateUserTokens(neo4jUsr.Id, response.Token, response.RefreshToken)
-			if err != nil {
-				log.Print("Error updating database: ", err)
-				http.Error(w, "Internal server error", http.StatusInternalServerError)
-				return
 			}
 		} else {
-			response = &models.LoginResponse{Token: transform.ConvertNullableToString(neo4jUsr.Token),
-				RefreshToken: transform.ConvertNullableToString(neo4jUsr.RefreshToken)}
+			response := models.LoginResponse{
+				Token:                 transform.ConvertNullableToString(neo4jUsr.Token),
+				RefreshToken:          transform.ConvertNullableToString(neo4jUsr.RefreshToken),
+				TokenExpiresAt:        claims.ExpiresAt.Time.Unix(),
+				RefreshTokenExpiresAt: rClaims.ExpiresAt.Time.Unix(),
+			}
+			jsonResponse, err = json.Marshal(response)
+			if err != nil {
+				log.Print("Failed to marshal result into JSON: ", err)
+				http.Error(w, "Internal server error", http.StatusInternalServerError)
+				return
+			}
 		}
-	}
-	jsonResponse, err := json.Marshal(&response)
-	if err != nil {
-		log.Print("Failed to marshal result into JSON: ", err)
-		http.Error(w, "Internal server error", http.StatusInternalServerError)
-		return
 	}
 
 	w.Header().Set("Content-Type", "application/json")
