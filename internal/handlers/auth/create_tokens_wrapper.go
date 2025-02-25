@@ -14,12 +14,12 @@ func CreateTokensWrapper(neo4jUsr *models.User) ([]byte, error) {
 		log.Print("Error creating token:", err)
 		return nil, err
 	}
-	claims, errC := jwtHelpers.DecodeToken(*neo4jUsr.Token)
+	claims, errC := jwtHelpers.DecodeToken(*token)
 	if errC != nil {
 		log.Print("Error decoding token:", errC)
 		return nil, errC
 	}
-	rClaims, errRC := jwtHelpers.DecodeToken(*neo4jUsr.RefreshToken)
+	rClaims, errRC := jwtHelpers.DecodeToken(*refreshToken)
 	if errRC != nil {
 		log.Print("Error decoding refresh token:", errRC)
 		return nil, errRC

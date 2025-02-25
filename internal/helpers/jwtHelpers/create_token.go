@@ -23,7 +23,7 @@ func CreateTokens(email string, role models.UserRoles, id int) (*string, *string
 	if err != nil {
 		return nil, nil, err
 	}
-	timespan := utils.TernaryOperator(role != userRoles.Registered, JwtAdmDuration, JwtUsrDuration)
+	timespan := utils.TernaryOperator(role == userRoles.Admin, JwtAdmDuration, JwtUsrDuration)
 	expirationTime := time.Now().UTC().Add(timespan)
 	claims := &models.JwtClaims{
 		Email: email,
@@ -41,7 +41,7 @@ func CreateTokens(email string, role models.UserRoles, id int) (*string, *string
 		return nil, nil, err
 	}
 
-	rTimespan := utils.TernaryOperator(role != userRoles.Registered, JwtAdmDuration, rJwtUsrDuration)
+	rTimespan := utils.TernaryOperator(role == userRoles.Admin, JwtAdmDuration, rJwtUsrDuration)
 	rExpirationTime := time.Now().UTC().Add(rTimespan)
 	rClaims := &models.JwtClaims{
 		Email: email,
