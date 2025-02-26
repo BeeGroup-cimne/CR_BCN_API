@@ -10,7 +10,6 @@ import (
 	"io"
 	"log"
 	"net/http"
-	"time"
 )
 
 func Login(w http.ResponseWriter, r *http.Request) {
@@ -56,7 +55,6 @@ func Login(w http.ResponseWriter, r *http.Request) {
 
 	var jsonResponse []byte
 	var errCreateToken error
-	now := time.Now().UTC()
 
 	//If it doesn't already have a token it generates one
 	if neo4jUsr.Token == nil {
@@ -68,17 +66,14 @@ func Login(w http.ResponseWriter, r *http.Request) {
 		claims, errC := jwtHelpers.DecodeToken(*neo4jUsr.Token)
 		if errC != nil {
 			log.Print("Error decoding token:", errC)
-			http.Error(w, "Internal server error", http.StatusInternalServerError)
-			return
+			//http.Error(w, "Internal server error", http.StatusInternalServerError)
 		}
 		rClaims, errRC := jwtHelpers.DecodeToken(*neo4jUsr.RefreshToken)
 		if errRC != nil {
 			log.Print("Error decoding refresh token:", errRC)
-			http.Error(w, "Internal server error", http.StatusInternalServerError)
-			return
+			//http.Error(w, "Internal server error", http.StatusInternalServerError)
 		}
-		//If the token has expired it generates one
-		if claims.ExpiresAt.Before(now) {
+		if errRC != nil || errC != nil {
 			jsonResponse, errCreateToken = CreateTokensWrapper(neo4jUsr)
 			if errCreateToken != nil {
 				http.Error(w, "Internal server error", http.StatusInternalServerError)
