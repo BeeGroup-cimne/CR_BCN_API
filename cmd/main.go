@@ -7,6 +7,11 @@ import (
 	"net/http"
 )
 
+// @title My API
+// @version 1.0
+// @description This is an example API with Swagger documentation using mux.
+// @host localhost:8080
+// @BasePath /api/v1
 func main() {
 
 	// Conectar a MongoDB
