@@ -21,7 +21,11 @@ func GetCollectionHandler(w http.ResponseWriter, r *http.Request) {
 		http.Error(w, "Invalid request method", http.StatusMethodNotAllowed)
 		return
 	}
-
+	calculation_date := r.URL.Query().Get("calculation_date")
+	if calculation_date == "" {
+		http.Error(w, "Falta el parámetro 'nombre'", http.StatusBadRequest)
+		return
+	}
 	vars := mux.Vars(r)
 	collection_name := vars["collection_name"]
 
@@ -31,7 +35,7 @@ func GetCollectionHandler(w http.ResponseWriter, r *http.Request) {
 	defer cancel()
 
 	// query
-	cursor, err := collection.Find(ctx, bson.M{})
+	cursor, err := collection.Find(ctx, bson.M{"calculation_date": calculation_date})
 	if err != nil {
 		http.Error(w, "Error when querying DB", http.StatusInternalServerError)
 		return
