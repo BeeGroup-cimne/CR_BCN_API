@@ -10,6 +10,7 @@ import (
 	"go.mongodb.org/mongo-driver/mongo"
 	"log"
 	"net/http"
+	"strings"
 	"time"
 )
 
@@ -22,10 +23,7 @@ func GetCollectionHandler(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 	calculation_date := r.URL.Query().Get("calculation_date")
-	if calculation_date == "" {
-		http.Error(w, "Falta el parámetro 'nombre'", http.StatusBadRequest)
-		return
-	}
+
 	vars := mux.Vars(r)
 	collection_name := vars["collection_name"]
 
@@ -34,8 +32,20 @@ func GetCollectionHandler(w http.ResponseWriter, r *http.Request) {
 	ctx, cancel := context.WithTimeout(context.Background(), 30*time.Second)
 	defer cancel()
 
+	var filter bson.M
 	// query
-	cursor, err := collection.Find(ctx, bson.M{"calculation_date": calculation_date})
+	if strings.HasSuffix(collection_name, "_data") {
+		filter = bson.M{}
+	} else {
+		if calculation_date == "" {
+			http.Error(w, "'calculation_date' param missing", http.StatusBadRequest)
+			return
+		} else {
+			filter = bson.M{"calculation_date": calculation_date}
+		}
+
+	}
+	cursor, err := collection.Find(ctx, filter)
 	if err != nil {
 		http.Error(w, "Error when querying DB", http.StatusInternalServerError)
 		return
