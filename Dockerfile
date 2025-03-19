@@ -10,5 +10,6 @@ RUN go build -o /go-api ./cmd
 FROM alpine:latest
 WORKDIR /
 COPY --from=builder /go-api /go-api
+COPY --from=builder /app/internal/data/residential_buildings_bcn.geojson /internal/data/residential_buildings_bcn.geojson
 EXPOSE 8080
 CMD ["/go-api"]
