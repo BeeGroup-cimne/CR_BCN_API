@@ -18,7 +18,9 @@ func SetupRouter() *mux.Router {
 	dataRoutes.HandleFunc("/climate_communications", data.GetClimateCommunicationsHandler).Methods(http.MethodGet)
 	dataRoutes.HandleFunc("/collection/{collection_name}", data.GetCollectionHandler).Methods(http.MethodGet)
 	dataRoutes.HandleFunc("/geometry_collection/{collection_name}", data.GetGeometryCollectionHandler).Methods(http.MethodGet)
+	dataRoutes.HandleFunc("/collection/aggregation_levels/{lang}", data.GetAggregationLevelsHandler).Methods(http.MethodGet)
 	dataRoutes.HandleFunc("/collection/indicators/{lang}", data.GetIndicatorsHandler).Methods(http.MethodGet)
+	dataRoutes.HandleFunc("/collection/indicators_by_group/{agregation_level}/{lang}", data.GetIndicatorsByGroupHandler).Methods(http.MethodGet)
 
 	authRoutes := r.PathPrefix("/auth").Subrouter()
 	authRoutes.HandleFunc("/login", auth.Login).Methods(http.MethodPost)
