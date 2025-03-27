@@ -29,7 +29,7 @@ func GetIndicatorsByGroupHandler(w http.ResponseWriter, r *http.Request) {
 	switch aggregationLevel {
 	case "building":
 		collection = database.MongoClient.Database("cr_bcn_kpis").Collection("buildings_indicators_by_group")
-	case "census_tracts":
+	case "census_tract":
 		collection = database.MongoClient.Database("cr_bcn_kpis").Collection("census_tracts_indicators_by_group")
 	default:
 		http.Error(w, "Invalid aggregation level", http.StatusBadRequest)
