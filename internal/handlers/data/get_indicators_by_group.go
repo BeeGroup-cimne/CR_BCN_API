@@ -24,7 +24,7 @@ func GetIndicatorsByGroupHandler(w http.ResponseWriter, r *http.Request) {
 
 	vars := mux.Vars(r)
 	lang := vars["lang"]
-	aggregationLevel := vars["agregation_level"]
+	aggregationLevel := vars["aggregation_level"]
 	var collection *mongo.Collection
 	switch aggregationLevel {
 	case "building":
