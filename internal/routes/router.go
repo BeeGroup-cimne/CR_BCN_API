@@ -16,6 +16,7 @@ func SetupRouter() *mux.Router {
 	dataRoutes.Use(middleware.DataMiddleware)
 	//dataRoutes.HandleFunc("/swagger/*", httpSwagger.WrapHandler)
 	dataRoutes.HandleFunc("/climate_communications", data.GetClimateCommunicationsHandler).Methods(http.MethodGet)
+	dataRoutes.HandleFunc("/collection/vulnerability_index", data.GetVulnerabilityIndex).Methods(http.MethodPost)
 	dataRoutes.HandleFunc("/collection/{collection_name}", data.GetCollectionHandler).Methods(http.MethodGet)
 	dataRoutes.HandleFunc("/geometry_collection/{collection_name}", data.GetGeometryCollectionHandler).Methods(http.MethodGet)
 	dataRoutes.HandleFunc("/collection/aggregation_levels/{lang}", data.GetAggregationLevelsHandler).Methods(http.MethodGet)
