@@ -23,6 +23,7 @@ func SetupRouter() *mux.Router {
 	dataRoutes.HandleFunc("/collection/indicators/{lang}", data.GetIndicatorsHandler).Methods(http.MethodGet)
 	dataRoutes.HandleFunc("/collection/indicators_by_group/{aggregation_level}/{lang}", data.GetIndicatorsByGroupHandler).Methods(http.MethodGet)
 	dataRoutes.HandleFunc("/collection/indicators_by_reference/{aggregation_level}/{reference}", data.GetIndicatorsByReferenceHandler).Methods(http.MethodGet)
+	dataRoutes.HandleFunc("/collection/indicators_by_reference_data/{aggregation_level}/{lang}", data.GetIndicatorsByReferenceDataHandler).Methods(http.MethodGet)
 
 	authRoutes := r.PathPrefix("/auth").Subrouter()
 	authRoutes.HandleFunc("/login", auth.Login).Methods(http.MethodPost)
