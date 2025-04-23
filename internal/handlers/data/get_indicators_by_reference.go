@@ -16,6 +16,7 @@ type Indicator struct {
 	Reference       string                 `json:"reference"`
 	CalculationDate string                 `json:"calculation_date"`
 	Indicators      map[string]interface{} `json:"indicators"`
+	Location        map[string]interface{} `json:"location"`
 }
 
 func GetIndicatorsByReferenceHandler(w http.ResponseWriter, r *http.Request) {
