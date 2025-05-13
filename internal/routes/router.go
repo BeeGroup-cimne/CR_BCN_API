@@ -17,6 +17,7 @@ func SetupRouter() *mux.Router {
 	//dataRoutes.HandleFunc("/swagger/*", httpSwagger.WrapHandler)
 	dataRoutes.HandleFunc("/climate_communications", data.GetClimateCommunicationsHandler).Methods(http.MethodGet)
 	dataRoutes.HandleFunc("/collection/vulnerability_index", data.GetVulnerabilityIndex).Methods(http.MethodPost)
+	dataRoutes.HandleFunc("/climate_shelters", data.GetClimateShelters).Methods(http.MethodPost)
 	dataRoutes.HandleFunc("/collection/{collection_name}", data.GetCollectionHandler).Methods(http.MethodGet)
 	dataRoutes.HandleFunc("/geometry_collection/{collection_name}", data.GetGeometryCollectionHandler).Methods(http.MethodGet)
 	dataRoutes.HandleFunc("/collection/aggregation_levels/{lang}", data.GetAggregationLevelsHandler).Methods(http.MethodGet)
@@ -31,6 +32,9 @@ func SetupRouter() *mux.Router {
 
 	userRoutes := r.PathPrefix("/user").Subrouter()
 	userRoutes.Use(middleware.AdminMiddleware)
+	r.HandleFunc("/user/access_request", user.AccessRequest).Methods(http.MethodPost)
+	r.HandleFunc("/user/status/{email_id}/update", user.UpdateUserAccessStatus).Methods(http.MethodPut)
+
 	userRoutes.HandleFunc("/create", user.Post).Methods(http.MethodPost)
 	userRoutes.HandleFunc("/{id}", user.Get).Methods(http.MethodGet)
 	userRoutes.HandleFunc("/{id}/update", user.Put).Methods(http.MethodPut)
