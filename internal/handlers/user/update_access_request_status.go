@@ -17,7 +17,7 @@ func UpdateUserAccessStatus(w http.ResponseWriter, r *http.Request) {
 	}
 
 	vars := mux.Vars(r)
-	email_id := vars["email_id"]
+	email_id := vars["id"]
 
 	user, err := neo4jOperations.GetUserAccessRequest(email_id)
 	if err != nil {
