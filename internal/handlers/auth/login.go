@@ -84,6 +84,7 @@ func Login(w http.ResponseWriter, r *http.Request) {
 				RefreshToken:          transform.ConvertNullableToString(neo4jUsr.RefreshToken),
 				TokenExpiresAt:        claims.ExpiresAt.Time.Unix(),
 				RefreshTokenExpiresAt: rClaims.ExpiresAt.Time.Unix(),
+				Role:                  neo4jUsr.Role,
 			}
 			jsonResponse, err = json.Marshal(response)
 			if err != nil {
