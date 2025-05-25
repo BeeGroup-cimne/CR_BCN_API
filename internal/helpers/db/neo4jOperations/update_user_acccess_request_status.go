@@ -8,10 +8,10 @@ import (
 	"go-api/internal/models"
 )
 
-func UpdateUserAccessRequestStatus(user models.UpdateStatusAccessRequest) error {
-	query := "MATCH (u) WHERE u.email=$email SET u.status=$status;"
+func UpdateUserAccessRequestStatus(id int64, user models.UpdateStatusAccessRequest) error {
+	query := "MATCH (u) WHERE id(u)=$id SET u.status=$status;"
 	params := map[string]interface{}{
-		"email":  user.Email,
+		"id":     id,
 		"status": user.Status,
 	}
 	driver, err := database.NewNeo4jDriver()

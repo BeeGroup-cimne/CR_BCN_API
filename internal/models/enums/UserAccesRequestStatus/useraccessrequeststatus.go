@@ -4,5 +4,12 @@ import "go-api/internal/models"
 
 const (
 	Unprocessed models.UserAccessRequestStatus = "unprocessed"
-	Processed   models.UserAccessRequestStatus = "processed"
+	Approved    models.UserAccessRequestStatus = "approved"
+	Declined    models.UserAccessRequestStatus = "declined"
 )
+
+var AllStatus = []models.UserAccessRequestStatus{
+	Unprocessed,
+	Approved,
+	Declined,
+}

@@ -2,12 +2,16 @@ package user
 
 import (
 	"encoding/json"
+	"fmt"
 	"github.com/gorilla/mux"
 	"go-api/internal/helpers/db/neo4jOperations"
+	"go-api/internal/helpers/utils"
 	"go-api/internal/models"
+	"go-api/internal/models/enums/UserAccesRequestStatus"
 	"io"
 	"log"
 	"net/http"
+	"strconv"
 )
 
 func UpdateUserAccessStatus(w http.ResponseWriter, r *http.Request) {
@@ -17,16 +21,11 @@ func UpdateUserAccessStatus(w http.ResponseWriter, r *http.Request) {
 	}
 
 	vars := mux.Vars(r)
-	email_id := vars["id"]
-
-	user, err := neo4jOperations.GetUserAccessRequest(email_id)
+	str := vars["id"]
+	id, err := strconv.ParseInt(str, 10, 64)
 	if err != nil {
-		log.Print("Error fetching db:", err)
+		fmt.Println("Error converting id to int64:", err)
 		http.Error(w, "Internal server error", http.StatusInternalServerError)
-		return
-	}
-	if user == nil {
-		http.Error(w, "Access request not found", http.StatusNotFound)
 		return
 	}
 
@@ -46,13 +45,29 @@ func UpdateUserAccessStatus(w http.ResponseWriter, r *http.Request) {
 		}
 	}(r.Body)
 
+	if !utils.IsValidEnum(userUpdate.Status, userAccessRequestStatus.AllStatus) {
+		http.Error(w, "Invalid status value", http.StatusBadRequest)
+		return
+	}
+
+	uar, err := neo4jOperations.GetUserAccessRequest(id)
+	if err != nil {
+		log.Print("Error fetching db:", err)
+		http.Error(w, "Internal server error", http.StatusInternalServerError)
+		return
+	}
+	if uar == nil {
+		http.Error(w, "Access request not found", http.StatusNotFound)
+		return
+	}
+
 	//err = checks.UserUpdateParamsChecks(*user, userUpdate)
 	//if err != nil {
 	//	http.Error(w, err.Error(), http.StatusBadRequest)
 	//	return
 	//}
 
-	err = neo4jOperations.UpdateUserAccessRequestStatus(userUpdate)
+	err = neo4jOperations.UpdateUserAccessRequestStatus(id, userUpdate)
 	if err != nil {
 		log.Print("Error updating db:", err)
 		http.Error(w, "Internal server error", http.StatusInternalServerError)
