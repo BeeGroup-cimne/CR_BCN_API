@@ -25,6 +25,15 @@ func CreateUser(user models.CreateUserRequest) (*string, error) {
 		"accumulated_daily_connections":  0,
 		"accumulated_total_connections":  0,
 	}
+	if user.Entity != nil {
+		params["entity"] = *user.Entity
+	}
+	if user.Department != nil {
+		params["department"] = *user.Department
+	}
+	if user.Name != nil {
+		params["name"] = *user.Name
+	}
 	if user.MaxHourlyConnections != nil {
 		params["max_hourly_connections"] = *user.MaxHourlyConnections
 	}

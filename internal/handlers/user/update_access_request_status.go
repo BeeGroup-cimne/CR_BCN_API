@@ -5,9 +5,11 @@ import (
 	"fmt"
 	"github.com/gorilla/mux"
 	"go-api/internal/helpers/db/neo4jOperations"
+	"go-api/internal/helpers/security/checks"
 	"go-api/internal/helpers/utils"
 	"go-api/internal/models"
 	"go-api/internal/models/enums/UserAccesRequestStatus"
+	"go-api/internal/models/enums/userRoles"
 	"io"
 	"log"
 	"net/http"
@@ -61,12 +63,6 @@ func UpdateUserAccessStatus(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	//err = checks.UserUpdateParamsChecks(*user, userUpdate)
-	//if err != nil {
-	//	http.Error(w, err.Error(), http.StatusBadRequest)
-	//	return
-	//}
-
 	err = neo4jOperations.UpdateUserAccessRequestStatus(id, userUpdate)
 	if err != nil {
 		log.Print("Error updating db:", err)
@@ -74,9 +70,37 @@ func UpdateUserAccessStatus(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	result := models.Message{
-		Status:  "OK",
-		Message: "Access request updated",
+	var result models.Message
+
+	if userUpdate.Status == userAccessRequestStatus.Approved {
+		err = checks.UserAccessRequestCreateParamsChecks(*uar)
+		if err != nil {
+			http.Error(w, err.Error(), http.StatusBadRequest)
+			return
+		}
+		user := models.CreateUserRequest{
+			Email:      uar.Email,
+			Password:   uar.Password,
+			Role:       userRoles.Registered,
+			Entity:     &uar.Entity,
+			Department: &uar.Department,
+			Name:       &uar.Name,
+		}
+		id, err := neo4jOperations.CreateUser(user)
+		if err != nil {
+			log.Print("Error creating user in db:", err)
+			http.Error(w, "Internal server error", http.StatusInternalServerError)
+			return
+		}
+		result = models.Message{
+			Status:  "OK",
+			Message: *id,
+		}
+	} else {
+		result = models.Message{
+			Status:  "OK",
+			Message: "Access request denied.",
+		}
 	}
 
 	jsonResponse, err := json.Marshal(result)

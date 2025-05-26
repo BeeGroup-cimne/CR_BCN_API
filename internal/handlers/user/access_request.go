@@ -3,6 +3,7 @@ package user
 import (
 	"encoding/json"
 	"go-api/internal/helpers/db/neo4jOperations"
+	"go-api/internal/helpers/security/checks"
 	"go-api/internal/models"
 	"io"
 	"log"
@@ -29,6 +30,12 @@ func AccessRequest(w http.ResponseWriter, r *http.Request) {
 			return
 		}
 	}(r.Body)
+
+	err = checks.UserAccessRequestCreateParamsChecks(user)
+	if err != nil {
+		http.Error(w, err.Error(), http.StatusBadRequest)
+		return
+	}
 
 	//err = checks.UserCreateParamsChecks(user)
 	//if err != nil {

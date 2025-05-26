@@ -6,6 +6,9 @@ type User struct {
 	Email                        string    `json:"email"`
 	CreationDate                 string    `json:"creation_date"`
 	Role                         UserRoles `json:"role"`
+	Name                         *string   `json:"name"`
+	Department                   *string   `json:"department"`
+	Entity                       *string   `json:"entity"`
 	LastConnectionDate           *string   `json:"last_connection_date"`
 	AccumulatedHourlyConnections *int      `json:"accumulated_hourly_connections"`
 	MaxHourlyConnections         *int      `json:"max_hourly_connections"`

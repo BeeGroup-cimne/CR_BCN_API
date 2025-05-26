@@ -3,6 +3,7 @@ package user
 import (
 	"encoding/json"
 	"go-api/internal/helpers/db/neo4jOperations"
+	"go-api/internal/models"
 	"log"
 	"net/http"
 )
@@ -20,8 +21,7 @@ func AccessRequestList(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 	if requestList == nil {
-		http.Error(w, "Requests not found", http.StatusNotFound)
-		return
+		requestList = []*models.UserAccessRequest{}
 	}
 
 	jsonResponse, err := json.Marshal(requestList)
