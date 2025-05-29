@@ -53,7 +53,6 @@ func GetUser(value interface{}) (*models.User, error) {
 
 		return &models.User{
 			Id:                           int(data["id"].(int64)),
-			Password:                     data["password"].(string),
 			Email:                        data["email"].(string),
 			CreationDate:                 data["creation_date"].(string),
 			Role:                         models.UserRoles(data["role"].(string)),
@@ -68,6 +67,7 @@ func GetUser(value interface{}) (*models.User, error) {
 			RefreshToken:                 transform.ConvertToNullableString(data["refresh_token"]),
 			ExpirationDate:               transform.ConvertToNullableString(data["expiration_date"]),
 			StartDate:                    transform.ConvertToNullableString(data["start_date"]),
+			//Password:                     data["password"].(string),
 		}, nil
 	}
 

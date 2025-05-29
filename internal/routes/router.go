@@ -37,8 +37,8 @@ func SetupRouter() *mux.Router {
 	userRoutes.HandleFunc("/create", user.Post).Methods(http.MethodPost)
 	userRoutes.HandleFunc("/list", user.List).Methods(http.MethodGet)
 	userRoutes.HandleFunc("/{id}", user.Get).Methods(http.MethodGet)
-	userRoutes.HandleFunc("/{id}/update", user.Put).Methods(http.MethodPut)
-	userRoutes.HandleFunc("/{id}/delete", user.Delete).Methods(http.MethodDelete)
+	userRoutes.HandleFunc("/{id}", user.Put).Methods(http.MethodPut)
+	userRoutes.HandleFunc("/{id}", user.Delete).Methods(http.MethodDelete)
 	userRoutes.HandleFunc("/access_request/list", user.AccessRequestList).Methods(http.MethodGet)
 	userRoutes.HandleFunc("/access_request/{id}/update", user.UpdateUserAccessStatus).Methods(http.MethodPut)
 

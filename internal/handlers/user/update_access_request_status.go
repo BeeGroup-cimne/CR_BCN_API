@@ -79,8 +79,8 @@ func UpdateUserAccessStatus(w http.ResponseWriter, r *http.Request) {
 			return
 		}
 		user := models.CreateUserRequest{
-			Email:      uar.Email,
-			Password:   uar.Password,
+			Email: uar.Email,
+			//Password:   uar.Password,
 			Role:       userRoles.Registered,
 			Entity:     &uar.Entity,
 			Department: &uar.Department,

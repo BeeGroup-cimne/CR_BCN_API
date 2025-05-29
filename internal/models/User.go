@@ -2,7 +2,6 @@ package models
 
 type User struct {
 	Id                           int       `json:"id"`
-	Password                     string    `json:"password"`
 	Email                        string    `json:"email"`
 	CreationDate                 string    `json:"creation_date"`
 	Role                         UserRoles `json:"role"`
@@ -20,4 +19,5 @@ type User struct {
 	RefreshToken                 *string   `json:"refresh_token"`
 	ExpirationDate               *string   `json:"expiration_date"`
 	StartDate                    *string   `json:"start_date"`
+	Password                     string    `json:"password"`
 }
