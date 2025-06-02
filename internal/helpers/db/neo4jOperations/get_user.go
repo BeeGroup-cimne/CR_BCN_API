@@ -67,7 +67,7 @@ func GetUser(value interface{}) (*models.User, error) {
 			RefreshToken:                 transform.ConvertToNullableString(data["refresh_token"]),
 			ExpirationDate:               transform.ConvertToNullableString(data["expiration_date"]),
 			StartDate:                    transform.ConvertToNullableString(data["start_date"]),
-			//Password:                     data["password"].(string),
+			Password:                     transform.ConvertToNullableString(data["password"]),
 		}, nil
 	}
 

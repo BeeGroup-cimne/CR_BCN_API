@@ -41,6 +41,21 @@ func UpdateUser(user models.UpdateUserRequest, id int) error {
 	if user.StartDate != nil {
 		params["start_date"] = *user.StartDate
 	}
+	if user.Entity != nil {
+		params["entity"] = *user.Entity
+	}
+	if user.Department != nil {
+		params["department"] = *user.Department
+	}
+	if user.Name != nil {
+		params["name"] = *user.Name
+	}
+	if user.PasswordResetToken != nil {
+		params["password_reset_token"] = *user.PasswordResetToken
+	}
+	if user.PasswordResetTokenExpiresAt != nil {
+		params["password_reset_token_expires_at"] = *user.PasswordResetTokenExpiresAt
+	}
 
 	keys := make([]string, 0, len(params))
 	for key := range params {

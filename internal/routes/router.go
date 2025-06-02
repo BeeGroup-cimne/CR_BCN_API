@@ -33,6 +33,8 @@ func SetupRouter() *mux.Router {
 	userRoutes := r.PathPrefix("/user").Subrouter()
 	userRoutes.Use(middleware.AdminMiddleware)
 	r.HandleFunc("/user/access_request", user.AccessRequest).Methods(http.MethodPost)
+	r.HandleFunc("/user/change_password", user.ChangePassword).Methods(http.MethodPost)
+	r.HandleFunc("/user/recover_password", user.RecoverPassword).Methods(http.MethodPost)
 
 	userRoutes.HandleFunc("/create", user.Post).Methods(http.MethodPost)
 	userRoutes.HandleFunc("/list", user.List).Methods(http.MethodGet)
