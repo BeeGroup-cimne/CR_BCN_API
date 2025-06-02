@@ -14,6 +14,6 @@ type UpdateUserRequest struct {
 	Entity                      *string    `json:"entity"`
 	Department                  *string    `json:"department"`
 	Name                        *string    `json:"name"`
-	PasswordResetToken          *string    `json:"password_reset_token"`
+	PasswordResetTokenHash      *string    `json:"password_reset_token_hash"`
 	PasswordResetTokenExpiresAt *time.Time `json:"password_reset_token_expires_at"`
 }

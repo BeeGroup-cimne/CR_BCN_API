@@ -16,7 +16,7 @@ func ValidateRecoveryToken(user *models.User, inputToken string) error {
 	hash := sha256.Sum256([]byte(inputToken))
 	hashedInput := base64.URLEncoding.EncodeToString(hash[:])
 
-	if *user.PasswordResetToken != hashedInput {
+	if *user.PasswordResetTokenHash != hashedInput {
 		return errors.New("invalid token")
 	}
 

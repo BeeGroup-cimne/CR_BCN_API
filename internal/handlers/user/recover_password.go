@@ -3,7 +3,8 @@ package user
 import (
 	"encoding/json"
 	"go-api/internal/helpers/db/neo4jOperations"
-	"go-api/internal/helpers/security/checks"
+	"go-api/internal/helpers/mailing"
+	"go-api/internal/helpers/security/password"
 	"go-api/internal/models"
 	"io"
 	"log"
@@ -15,7 +16,7 @@ func RecoverPassword(w http.ResponseWriter, r *http.Request) {
 		http.Error(w, "Invalid request method", http.StatusMethodNotAllowed)
 		return
 	}
-	var user models.UserAccessRequest
+	var user models.UserRecoverPasswordRequest
 
 	err := json.NewDecoder(r.Body).Decode(&user)
 	if err != nil {
@@ -31,28 +32,40 @@ func RecoverPassword(w http.ResponseWriter, r *http.Request) {
 		}
 	}(r.Body)
 
-	err = checks.UserAccessRequestCreateParamsChecks(user)
+	userExists, err := neo4jOperations.UserAccessRequestExists(user.Email)
+	if err != nil {
+		http.Error(w, err.Error(), http.StatusBadRequest)
+		return
+	}
+	if !userExists {
+		http.Error(w, "Email does not exist.", http.StatusBadRequest)
+		return
+	}
+
+	token, expiresAt, hashedToken, err := password.GenerateRecoveryToken(24)
 	if err != nil {
 		http.Error(w, err.Error(), http.StatusBadRequest)
 		return
 	}
 
-	//err = checks.UserCreateParamsChecks(user)
-	//if err != nil {
-	//	http.Error(w, err.Error(), http.StatusBadRequest)
-	//	return
-	//}
-
-	id, err := neo4jOperations.CreateUserAccessRequest(user)
+	err = neo4jOperations.UpdateUser(models.UpdateUserRequest{PasswordResetTokenHash: &hashedToken, PasswordResetTokenExpiresAt: &expiresAt}, user.Email)
 	if err != nil {
-		log.Print("Error fetching db:", err)
 		http.Error(w, "Internal server error", http.StatusInternalServerError)
 		return
 	}
-
+	message, err := mailing.CreatePasswordRecoveryMessage(user.Email, token, 24)
+	if err != nil {
+		http.Error(w, "Internal server error", http.StatusInternalServerError)
+		return
+	}
+	err = mailing.SendEmail(user.Email, message, "Password Reset in ClimateReady")
+	if err != nil {
+		http.Error(w, "Internal server error", http.StatusInternalServerError)
+		return
+	}
 	result := models.Message{
 		Status:  "OK",
-		Message: *id,
+		Message: "Password recovery email sent",
 	}
 
 	jsonResponse, err := json.Marshal(result)

@@ -22,6 +22,6 @@ type User struct {
 	ExpirationDate               *string    `json:"expiration_date"`
 	StartDate                    *string    `json:"start_date"`
 	Password                     *string    `json:"password"`
-	PasswordResetToken           *string    `json:"password_reset_token"`
+	PasswordResetTokenHash       *string    `json:"password_reset_token_hash"`
 	PasswordResetTokenExpiresAt  *time.Time `json:"password_reset_token_expires_at"`
 }

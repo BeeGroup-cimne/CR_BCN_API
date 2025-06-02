@@ -68,3 +68,23 @@ func ConvertIsoStringToTime(isoDate string) time.Time {
 	}
 	return parsedTime
 }
+
+func ConvertToNullableTime(value interface{}) *time.Time {
+	if value == nil {
+		return nil
+	}
+
+	switch t := value.(type) {
+	case time.Time:
+		return &t
+	case *time.Time:
+		return t
+	case string:
+		parsed, err := time.Parse(time.RFC3339, t)
+		if err == nil {
+			return &parsed
+		}
+	}
+
+	return nil
+}

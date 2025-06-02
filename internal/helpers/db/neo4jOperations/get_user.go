@@ -68,6 +68,8 @@ func GetUser(value interface{}) (*models.User, error) {
 			ExpirationDate:               transform.ConvertToNullableString(data["expiration_date"]),
 			StartDate:                    transform.ConvertToNullableString(data["start_date"]),
 			Password:                     transform.ConvertToNullableString(data["password"]),
+			PasswordResetTokenHash:       transform.ConvertToNullableString(data["password_reset_token_hash"]),
+			PasswordResetTokenExpiresAt:  transform.ConvertToNullableTime(data["password_reset_token_expires_at"]),
 		}, nil
 	}
 
@@ -75,5 +77,5 @@ func GetUser(value interface{}) (*models.User, error) {
 		return nil, err
 	}
 
-	return nil, nil
+	return nil, fmt.Errorf("User does not exist")
 }

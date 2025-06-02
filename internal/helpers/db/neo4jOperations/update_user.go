@@ -8,10 +8,24 @@ import (
 	"go-api/internal/helpers/security/password"
 	"go-api/internal/models"
 	"strings"
+	"time"
 )
 
-func UpdateUser(user models.UpdateUserRequest, id int) error {
+func UpdateUser(user models.UpdateUserRequest, value interface{}) error {
 	var params = map[string]interface{}{}
+	var id int
+	var email string
+
+	switch value.(type) {
+	case int:
+		id = value.(int)
+		break
+	case string:
+		email = strings.ToLower(value.(string))
+		break
+	default:
+		return fmt.Errorf("value must be either an email(string) or id(int)")
+	}
 
 	if user.Email != nil {
 		params["email"] = strings.ToLower(*user.Email)
@@ -22,6 +36,8 @@ func UpdateUser(user models.UpdateUserRequest, id int) error {
 			return err
 		}
 		params["password"] = hash
+		params["password_reset_token_hash"] = nil
+		params["password_reset_token_expires_at"] = nil
 	}
 	if user.Role != nil {
 		params["role"] = *user.Role
@@ -50,11 +66,12 @@ func UpdateUser(user models.UpdateUserRequest, id int) error {
 	if user.Name != nil {
 		params["name"] = *user.Name
 	}
-	if user.PasswordResetToken != nil {
-		params["password_reset_token"] = *user.PasswordResetToken
+	if user.PasswordResetTokenHash != nil {
+		params["password_reset_token_hash"] = *user.PasswordResetTokenHash
 	}
 	if user.PasswordResetTokenExpiresAt != nil {
-		params["password_reset_token_expires_at"] = *user.PasswordResetTokenExpiresAt
+		expiresAtFormatted := user.PasswordResetTokenExpiresAt.UTC().Format(time.RFC3339)
+		params["password_reset_token_expires_at"] = expiresAtFormatted
 	}
 
 	keys := make([]string, 0, len(params))
@@ -63,7 +80,9 @@ func UpdateUser(user models.UpdateUserRequest, id int) error {
 	}
 	strParams := "SET " + strings.Join(keys, ", ")
 	params["user_id"] = id
-	query := fmt.Sprintf("MATCH (u:APIUser) WHERE id(u)=$user_id %s", strParams)
+	params["user_email"] = email
+
+	query := fmt.Sprintf("MATCH (u:APIUser) WHERE id(u)=$user_id OR u.email=$user_email %s", strParams)
 
 	driver, err := database.NewNeo4jDriver()
 	if err != nil {

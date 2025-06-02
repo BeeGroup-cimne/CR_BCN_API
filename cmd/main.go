@@ -1,6 +1,7 @@
 package main
 
 import (
+	"github.com/joho/godotenv"
 	"go-api/internal/database"
 	"go-api/internal/routes"
 	"log"
@@ -13,6 +14,10 @@ import (
 // @host localhost:8090
 // @BasePath /api/v1
 func main() {
+	err := godotenv.Load()
+	if err != nil {
+		log.Fatalf("Error loading .env file: %s", err)
+	}
 
 	// Conectar a MongoDB
 	database.ConnectMongoDB()
