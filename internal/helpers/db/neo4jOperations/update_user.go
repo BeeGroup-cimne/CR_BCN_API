@@ -70,8 +70,7 @@ func UpdateUser(user models.UpdateUserRequest, value interface{}) error {
 		params["password_reset_token_hash"] = *user.PasswordResetTokenHash
 	}
 	if user.PasswordResetTokenExpiresAt != nil {
-		expiresAtFormatted := user.PasswordResetTokenExpiresAt.UTC().Format(time.RFC3339)
-		params["password_reset_token_expires_at"] = expiresAtFormatted
+		params["password_reset_token_expires_at"] = user.PasswordResetTokenExpiresAt.UTC().Format(time.RFC3339)
 	}
 
 	keys := make([]string, 0, len(params))

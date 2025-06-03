@@ -12,27 +12,21 @@ import (
 )
 
 func CreateUser(user models.CreateUserRequest) (*string, error) {
-	hash, err := password.HashPassword(user.Password)
-	if err != nil {
-		return nil, err
-	}
+
 	params := map[string]interface{}{
 		"email":                          strings.ToLower(user.Email),
-		"password":                       hash,
 		"creation_date":                  time.Now().UTC().Format(time.RFC3339),
 		"role":                           user.Role,
 		"accumulated_hourly_connections": 0,
 		"accumulated_daily_connections":  0,
 		"accumulated_total_connections":  0,
 	}
-	if user.Entity != nil {
-		params["entity"] = *user.Entity
-	}
-	if user.Department != nil {
-		params["department"] = *user.Department
-	}
-	if user.Name != nil {
-		params["name"] = *user.Name
+	if user.Password != nil {
+		hash, err := password.HashPassword(*user.Password)
+		if err != nil {
+			return nil, err
+		}
+		params["password"] = hash
 	}
 	if user.MaxHourlyConnections != nil {
 		params["max_hourly_connections"] = *user.MaxHourlyConnections
@@ -48,6 +42,21 @@ func CreateUser(user models.CreateUserRequest) (*string, error) {
 	}
 	if user.StartDate != nil {
 		params["start_date"] = *user.StartDate
+	}
+	if user.Entity != nil {
+		params["entity"] = *user.Entity
+	}
+	if user.Department != nil {
+		params["department"] = *user.Department
+	}
+	if user.Name != nil {
+		params["name"] = *user.Name
+	}
+	if user.PasswordResetTokenHash != nil {
+		params["password_reset_token_hash"] = *user.PasswordResetTokenHash
+	}
+	if user.PasswordResetTokenExpiresAt != nil {
+		params["password_reset_token_expires_at"] = user.PasswordResetTokenExpiresAt.UTC().Format(time.RFC3339)
 	}
 
 	keys := make([]string, 0, len(params))
