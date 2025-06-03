@@ -10,10 +10,7 @@ import (
 
 func UserCreateParamsChecks(user models.CreateUserRequest) error {
 	//PASSWORD CHECKS
-	if user.Password == nil {
-		return errors.New("No password")
-	}
-	if !IsSecurePassword(*user.Password) {
+	if user.Password != nil && !IsSecurePassword(*user.Password) {
 		return errors.New("Invalid password format. The password must have at least:\n- 8 characters\n- 1 Uppercase character\n- 1 Lower case character\n- 1 Number\n- 1 special character !@#$%^&*(),.?\":{}|<>_")
 	}
 
