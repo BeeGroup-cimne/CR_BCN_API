@@ -6,6 +6,7 @@ import (
 	"github.com/neo4j/neo4j-go-driver/v5/neo4j"
 	"go-api/internal/database"
 	"go-api/internal/helpers/security/password"
+	"go-api/internal/helpers/utils"
 	"go-api/internal/models"
 	"strings"
 	"time"
@@ -43,10 +44,12 @@ func UpdateUser(user models.UpdateUserRequest, value interface{}) error {
 		params["role"] = *user.Role
 	}
 	if user.MaxHourlyConnections != nil {
-		params["max_hourly_connections"] = *user.MaxHourlyConnections
+		n := utils.TernaryOperator(*user.MaxHourlyConnections < 1, nil, user.MaxHourlyConnections)
+		params["max_hourly_connections"] = n
 	}
 	if user.MaxDailyConnections != nil {
-		params["max_daily_connections"] = *user.MaxDailyConnections
+		n := utils.TernaryOperator(*user.MaxDailyConnections < 1, nil, user.MaxHourlyConnections)
+		params["max_daily_connections"] = n
 	}
 	if user.Blocked != nil {
 		params["blocked"] = *user.Blocked
