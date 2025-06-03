@@ -7,7 +7,6 @@ import (
 	"go-api/internal/database"
 	"go.mongodb.org/mongo-driver/bson"
 	"go.mongodb.org/mongo-driver/mongo"
-	"io/ioutil"
 	"log"
 	"net/http"
 	"os"
@@ -48,7 +47,7 @@ type MongoDoc struct {
 	KPIs      map[string]float64 `bson:"kpis"`
 }
 
-const geoJSONFilePath = "internal/data/residential_buildings_bcn.geojson"
+const geoJSONFilePath = "/Users/jose/GolandProjects/go-api/internal/data/residential_buildings_bcn.geojson"
 
 // getCollection
 func GetGeometryCollectionHandler(w http.ResponseWriter, r *http.Request) {
@@ -142,7 +141,7 @@ func loadGeoJSONFromFile(filePath string) (*GeoJSON, error) {
 	}
 	defer file.Close()
 
-	data, err := ioutil.ReadAll(file)
+	data, err := os.ReadFile(filePath)
 	if err != nil {
 		return nil, err
 	}
