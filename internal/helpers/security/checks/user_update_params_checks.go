@@ -16,7 +16,7 @@ func UserUpdateParamsChecks(user models.User, userUpdate models.UpdateUserReques
 		if *userUpdate.Password == "" {
 			return errors.New("No password")
 		}
-		if password.CheckPasswordHash(*userUpdate.Password, user.Password) {
+		if password.CheckPasswordHash(*userUpdate.Password, *user.Password) {
 			return errors.New("Password already in use")
 		}
 		if !IsSecurePassword(*userUpdate.Password) {

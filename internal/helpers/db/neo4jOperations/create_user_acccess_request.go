@@ -5,19 +5,18 @@ import (
 	"fmt"
 	"github.com/neo4j/neo4j-go-driver/v5/neo4j"
 	"go-api/internal/database"
-	"go-api/internal/helpers/security/password"
 	"go-api/internal/models"
 	"strings"
 )
 
 func CreateUserAccessRequest(user models.UserAccessRequest) (*string, error) {
-	hash, err := password.HashPassword(user.Password)
-	if err != nil {
-		return nil, err
-	}
+	//hash, err := password.HashPassword(user.Password)
+	//if err != nil {
+	//	return nil, err
+	//}
 	params := map[string]interface{}{
-		"email":      strings.ToLower(user.Email),
-		"password":   hash,
+		"email": strings.ToLower(user.Email),
+		//"password":   hash,
 		"entity":     user.Entity,
 		"department": user.Department,
 		"name":       user.Name,

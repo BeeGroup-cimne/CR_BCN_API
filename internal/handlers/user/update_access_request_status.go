@@ -5,7 +5,9 @@ import (
 	"fmt"
 	"github.com/gorilla/mux"
 	"go-api/internal/helpers/db/neo4jOperations"
+	"go-api/internal/helpers/mailing"
 	"go-api/internal/helpers/security/checks"
+	"go-api/internal/helpers/security/password"
 	"go-api/internal/helpers/utils"
 	"go-api/internal/models"
 	"go-api/internal/models/enums/UserAccesRequestStatus"
@@ -78,17 +80,35 @@ func UpdateUserAccessStatus(w http.ResponseWriter, r *http.Request) {
 			http.Error(w, err.Error(), http.StatusBadRequest)
 			return
 		}
+		token, expiresAt, hashedToken, err := password.GenerateRecoveryToken(24)
+		if err != nil {
+			http.Error(w, err.Error(), http.StatusBadRequest)
+			return
+		}
+		blocked := false
 		user := models.CreateUserRequest{
-			Email:      uar.Email,
-			Password:   uar.Password,
-			Role:       userRoles.Registered,
-			Entity:     &uar.Entity,
-			Department: &uar.Department,
-			Name:       &uar.Name,
+			Email:                       uar.Email,
+			Role:                        userRoles.Registered,
+			Entity:                      &uar.Entity,
+			Department:                  &uar.Department,
+			Name:                        &uar.Name,
+			PasswordResetTokenExpiresAt: &expiresAt,
+			PasswordResetTokenHash:      &hashedToken,
+			Blocked:                     &blocked,
 		}
 		id, err := neo4jOperations.CreateUser(user)
 		if err != nil {
 			log.Print("Error creating user in db:", err)
+			http.Error(w, "Internal server error", http.StatusInternalServerError)
+			return
+		}
+		message, err := mailing.CreateAccessRequestAcceptedMessage(user.Email, token, 72)
+		if err != nil {
+			http.Error(w, "Internal server error", http.StatusInternalServerError)
+			return
+		}
+		err = mailing.SendEmail(user.Email, message, "Access request granted in Climate Ready Barcelona")
+		if err != nil {
 			http.Error(w, "Internal server error", http.StatusInternalServerError)
 			return
 		}

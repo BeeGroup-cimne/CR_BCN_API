@@ -40,9 +40,12 @@ func GetUserList() ([]*models.User, error) {
 		}
 
 		user := &models.User{
-			Id:                           int(data["id"].(int64)),
-			Password:                     data["password"].(string),
+			Id: int(data["id"].(int64)),
+			//Password:                     data["password"].(string),
 			Email:                        data["email"].(string),
+			Department:                   transform.ConvertToNullableString(data["department"]),
+			Name:                         transform.ConvertToNullableString(data["name"]),
+			Entity:                       transform.ConvertToNullableString(data["entity"]),
 			CreationDate:                 data["creation_date"].(string),
 			Role:                         models.UserRoles(data["role"].(string)),
 			LastConnectionDate:           transform.ConvertToNullableString(data["last_connection_date"]),

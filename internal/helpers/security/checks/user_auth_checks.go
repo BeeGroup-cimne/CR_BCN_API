@@ -14,7 +14,7 @@ import (
 
 func UserAuthChecks(user *models.User, pwd *string) error {
 	if pwd != nil {
-		if !password.CheckPasswordHash(*pwd, user.Password) {
+		if !password.CheckPasswordHash(*pwd, *user.Password) {
 			return errors.New("invalid username or password")
 		}
 	}

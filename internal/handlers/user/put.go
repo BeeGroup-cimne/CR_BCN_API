@@ -31,10 +31,6 @@ func Put(w http.ResponseWriter, r *http.Request) {
 		http.Error(w, "Internal server error", http.StatusInternalServerError)
 		return
 	}
-	if user == nil {
-		http.Error(w, "User not found", http.StatusNotFound)
-		return
-	}
 
 	var userUpdate models.UpdateUserRequest
 

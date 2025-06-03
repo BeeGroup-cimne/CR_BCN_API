@@ -45,8 +45,8 @@ func GetUserAccessRequest(value interface{}) (*models.UserAccessRequest, error) 
 		data := userMap.(map[string]interface{})
 
 		return &models.UserAccessRequest{
-			Id:         data["id"].(int64),
-			Password:   data["password"].(string),
+			Id: data["id"].(int64),
+			//Password:   data["password"].(string),
 			Email:      data["email"].(string),
 			Entity:     data["entity"].(string),
 			Department: data["department"].(string),
