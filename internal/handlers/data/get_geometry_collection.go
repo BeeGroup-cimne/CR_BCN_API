@@ -32,9 +32,9 @@ type Feature struct {
 }
 
 type Properties struct {
-	FID       int      `json:"fid"`
-	Reference string   `json:"reference"`
-	KPIs      *float64 `json:"kpis"`
+	FID       int         `json:"fid"`
+	Reference string      `json:"reference"`
+	KPIs      interface{} `json:"kpis"`
 }
 
 type Geometry struct {
@@ -43,11 +43,11 @@ type Geometry struct {
 }
 
 type MongoDoc struct {
-	Reference string             `bson:"reference"`
-	KPIs      map[string]float64 `bson:"kpis"`
+	Reference string                 `bson:"reference"`
+	KPIs      map[string]interface{} `bson:"kpis"`
 }
 
-const geoJSONFilePath = "/Users/jose/GolandProjects/go-api/internal/data/residential_buildings_bcn.geojson"
+const geoJSONFilePath = "internal/data/residential_buildings_bcn.geojson"
 
 // getCollection
 func GetGeometryCollectionHandler(w http.ResponseWriter, r *http.Request) {
@@ -99,7 +99,7 @@ func GetGeometryCollectionHandler(w http.ResponseWriter, r *http.Request) {
 		}
 	}(cursor, ctx)
 
-	kpisMap := make(map[string]float64)
+	kpisMap := make(map[string]interface{})
 
 	for cursor.Next(ctx) {
 		var doc MongoDoc
