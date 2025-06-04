@@ -10,11 +10,12 @@ import (
 func CreateAccessRequestAcceptedMessage(email string, token string, expires int) (string, error) {
 	body := `<html>
 		<body>
-			<h3>Welcome to ClimateReady Barcelona</h3>
-			<p>Your request to access the platform has been granted. Visit us on <a href="{{.Website}}" target="_blank">{{.Website}}</a>, but first...</p>
-			<p>Click the link below to set your password:</p>
-			<p><a href="{{.Website}}/recover-password?token={{.Token}}&email={{.Email}}&newuser=true" target="_blank">Set new password.</a></p>
-			<p>This link will expire in {{.Expires}} hours.</p>
+			<h3>Welcome to Climate Ready Barcelona</h3>
+			<p>You have been granted access to the website. Visit us on <a href="{{.Website}}" target="_blank">{{.Website}}</a>, but first...</p>
+			<p>These are your new login credentials:<br />
+			<strong>Username</strong>: {{.Email}}<br />
+			<strong>Password</strong>: <a href="{{.Website}}/recover-password?token={{.Token}}&email={{.Email}}&newuser=true" target="_blank">Click this link to set the password</a><br />
+			This link will expire in {{.Expires}} hours.</p>
 		</body>
 		</html>`
 

@@ -3,7 +3,9 @@ package user
 import (
 	"encoding/json"
 	"go-api/internal/helpers/db/neo4jOperations"
+	"go-api/internal/helpers/mailing"
 	"go-api/internal/helpers/security/checks"
+	"go-api/internal/helpers/security/password"
 	"go-api/internal/models"
 	"io"
 	"log"
@@ -37,11 +39,38 @@ func Post(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	id, err := neo4jOperations.CreateUser(user)
-	if err != nil {
-		log.Print("Error fetching db:", err)
-		http.Error(w, "Internal server error", http.StatusInternalServerError)
-		return
+	var id *string
+	if user.Password == nil {
+		token, expiresAt, hashedToken, err := password.GenerateRecoveryToken(24)
+		if err != nil {
+			http.Error(w, err.Error(), http.StatusBadRequest)
+			return
+		}
+		user.PasswordResetTokenHash = &hashedToken
+		user.PasswordResetTokenExpiresAt = &expiresAt
+		id, err = neo4jOperations.CreateUser(user)
+		if err != nil {
+			log.Print("Error fetching db:", err)
+			http.Error(w, "Internal server error", http.StatusInternalServerError)
+			return
+		}
+		message, err := mailing.CreateAccessRequestAcceptedMessage(user.Email, token, 72)
+		if err != nil {
+			http.Error(w, "Internal server error", http.StatusInternalServerError)
+			return
+		}
+		err = mailing.SendEmail(user.Email, message, "Access request granted in Climate Ready Barcelona")
+		if err != nil {
+			http.Error(w, "Internal server error", http.StatusInternalServerError)
+			return
+		}
+	} else {
+		id, err = neo4jOperations.CreateUser(user)
+		if err != nil {
+			log.Print("Error fetching db:", err)
+			http.Error(w, "Internal server error", http.StatusInternalServerError)
+			return
+		}
 	}
 
 	result := models.Message{

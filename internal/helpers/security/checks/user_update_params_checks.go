@@ -52,13 +52,13 @@ func UserUpdateParamsChecks(user models.User, userUpdate models.UpdateUserReques
 	}
 
 	//DATE CHECKS
-	if userUpdate.ExpirationDate != nil && !IsValidDate(*userUpdate.ExpirationDate) {
+	if userUpdate.ExpirationDate != nil && *userUpdate.ExpirationDate != "" && !IsValidDate(*userUpdate.ExpirationDate) {
 		return errors.New(fmt.Sprintf("The expiration date format must be the following: %s", time.RFC3339))
 	}
-	if userUpdate.StartDate != nil && !IsValidDate(*userUpdate.StartDate) {
+	if userUpdate.StartDate != nil && *userUpdate.StartDate != "" && !IsValidDate(*userUpdate.StartDate) {
 		return errors.New(fmt.Sprintf("The start date format must be the following: %s", time.RFC3339))
 	}
-	if userUpdate.ExpirationDate != nil && userUpdate.StartDate != nil {
+	if userUpdate.ExpirationDate != nil && *userUpdate.ExpirationDate != "" && userUpdate.StartDate != nil && *userUpdate.StartDate != "" {
 		startDate, _ := time.Parse(time.RFC3339, *userUpdate.StartDate)
 		expiration, _ := time.Parse(time.RFC3339, *userUpdate.ExpirationDate)
 		if expiration.Before(startDate) {
