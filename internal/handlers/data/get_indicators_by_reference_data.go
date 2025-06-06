@@ -62,7 +62,7 @@ func GetIndicatorsByReferenceDataHandler(w http.ResponseWriter, r *http.Request)
 		filtered := make(map[string]interface{})
 		for key, val := range kpiMap {
 			switch key {
-			case "description", "name", "unit":
+			case "description", "name", "unit", "labels_names":
 				list, ok := val.(primitive.A)
 				if ok && len(list) > langIndex {
 					filtered[key] = list[langIndex]
