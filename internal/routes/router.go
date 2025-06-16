@@ -13,7 +13,7 @@ func SetupRouter() *mux.Router {
 	r := mux.NewRouter()
 	r.Use(middleware.CorsMiddleware)
 	dataRoutes := r.PathPrefix("/data").Subrouter()
-	//dataRoutes.Use(middleware.DataMiddleware)
+	dataRoutes.Use(middleware.DataMiddleware)
 	//dataRoutes.HandleFunc("/swagger/*", httpSwagger.WrapHandler)
 	dataRoutes.HandleFunc("/climate_communications", data.GetClimateCommunicationsHandler).Methods(http.MethodGet)
 	dataRoutes.HandleFunc("/collection/vulnerability_index", data.GetVulnerabilityIndex).Methods(http.MethodPost)
