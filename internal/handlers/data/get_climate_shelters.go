@@ -18,9 +18,9 @@ import (
 )
 
 type RequestPayload struct {
-	Date            string   `json:"date"`
-	Characteristics []string `json:"characteristics"`
-	BuildingType    string   `json:"building_type"`
+	Date            string          `json:"date"`
+	Characteristics map[string]bool `json:"characteristics"`
+	BuildingType    map[string]bool `json:"building_type"`
 }
 
 type ResponsePayload struct {
@@ -55,7 +55,12 @@ func GetClimateShelters(w http.ResponseWriter, r *http.Request) {
 	totalBuildings := 0
 
 	shelterSet := map[string]struct{}{}
-
+	filtered_shelters, err := neo4jOperations.GetFilteredClimateShelter(payload.Date, payload.Characteristics, payload.BuildingType)
+	print(filtered_shelters)
+	filteredSheltersSet := make(map[string]struct{}, len(filtered_shelters))
+	for _, shelter := range filtered_shelters {
+		filteredSheltersSet[shelter] = struct{}{}
+	}
 	for cursor.Next(ctx) {
 		var doc bson.M
 		cursor.Decode(&doc)
@@ -76,7 +81,7 @@ func GetClimateShelters(w http.ResponseWriter, r *http.Request) {
 			for shelterID, raw := range timesMap {
 				seconds := raw.(float64)
 				minutes := seconds / 60.0
-				if minutes < minTime {
+				if _, exists := filteredSheltersSet[shelterID]; exists && minutes < minTime {
 					minTime = minutes
 					nearestShelter = shelterID
 				}
@@ -86,35 +91,18 @@ func GetClimateShelters(w http.ResponseWriter, r *http.Request) {
 			buildings[buildingID] = minTime
 			buildingShelters[buildingID] = nearestShelter
 
-			if minTime > 10 {
+			if minTime >= 10 {
 				noBuilding["10"]++
 			}
-			if minTime > 20 {
+			if minTime >= 20 {
 				noBuilding["20"]++
 			}
 		}
 	}
-	shelters, err := neo4jOperations.GetClimateShelterCoordinates()
+	shelters, err := neo4jOperations.GetClimateShelterCoordinates(payload.Date, payload.Characteristics, payload.BuildingType)
 	if err != nil {
 		log.Fatalf("Error obteniendo shelters: %v", err)
 	}
-	// Pasar el servicio al handler con closure
-	//http.HandleFunc("/climate-shelter-coordinates", func(w http.ResponseWriter, r *http.Request) {
-	//	ctx := r.Context()
-	//	results, err := service.GetShelterCoordinates(ctx)
-	//	if err != nil {
-	//		http.Error(w, fmt.Sprintf("Neo4j query error: %v", err), http.StatusInternalServerError)
-	//		return
-	//	}
-	//	w.Header().Set("Content-Type", "application/json")
-	//	json.NewEncoder(w).Encode(results)
-	//})
-	////Obtener coordenadas desde Neo4j
-	//results, err := neo4jService.GetShelterCoordinates(ctx)
-	//if err != nil {
-	//	http.Error(w, fmt.Sprintf("Neo4j query error: %v", err), http.StatusInternalServerError)
-	//	return
-	//}
 
 	res := ResponsePayload{
 		Buildings:        buildings,
