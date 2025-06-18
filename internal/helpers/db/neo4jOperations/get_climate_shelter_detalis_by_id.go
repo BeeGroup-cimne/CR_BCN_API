@@ -16,28 +16,7 @@ func GetFilteredClimateShelterDetailsById(id string) (map[string]interface{}, er
 		"UNWIND outerList AS schedule " +
 		"WITH schedule, n "
 
-	query += "RETURN { " +
-		"climateShelterId: n.ns1__climateShelterId, " +
-		"hasAccessibleWc: n.ns1__has_accessible_wc, " +
-		"hasDrinkingFountain: n.ns1__has_drinking_fountain, " +
-		"hasDrinkingWater: n.ns1__has_drinking_water, " +
-		"hasKidsArea: n.ns1__has_kids_area, " +
-		"hasMedicalService: n.ns1__has_medical_service, " +
-		"hasNursingService: n.ns1__has_nursing_service, " +
-		"hasPetsAllowed: n.ns1__has_pets_allowed, " +
-		"hasRestroom: n.ns1__has_restroom, " +
-		"hasSummerClimateShelter: n.ns1__has_summer_climate_shelter, " +
-		"hasWheelchairSpace: n.ns1__has_wheelchair_space, " +
-		"hasWifi: n.ns1__has_wifi, " +
-		"hasWinterClimateShelter: n.ns1__has_winter_climate_shelter, " +
-		"isAccessible: n.ns1__is_accessible, " +
-		"isAccessiblePhysical: n.ns1__is_accessible_physical, " +
-		"name: n.ns1__name, " +
-		"streetName: n.ns1__street_name, " +
-		"streetNumber: n.ns1__street_number, " +
-		"type: n.ns1__type, " +
-		"schedule: schedule " +
-		"} AS result"
+	query += "RETURN n { .*, schedule: schedule} AS result"
 
 	driver, err := database.NewNeo4jDriver()
 	if err != nil {
