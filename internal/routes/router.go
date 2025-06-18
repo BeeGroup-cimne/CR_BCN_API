@@ -5,6 +5,7 @@ import (
 	"go-api/internal/handlers/auth"
 	"go-api/internal/handlers/data"
 	"go-api/internal/handlers/user"
+	"go-api/internal/handlers/webresource"
 	"go-api/internal/middleware"
 	"net/http"
 )
@@ -44,6 +45,15 @@ func SetupRouter() *mux.Router {
 	userRoutes.HandleFunc("/{id}", user.Delete).Methods(http.MethodDelete)
 	userRoutes.HandleFunc("/access_request/list", user.AccessRequestList).Methods(http.MethodGet)
 	userRoutes.HandleFunc("/access_request/{id}/update", user.UpdateUserAccessStatus).Methods(http.MethodPut)
+
+	webResourceRoutes := r.PathPrefix("/webresource").Subrouter()
+	webResourceRoutes.Use(middleware.AdminMiddleware)
+	webResourceRoutes.HandleFunc("/create", webresource.Post).Methods(http.MethodPost)
+	webResourceRoutes.HandleFunc("/list", webresource.List).Methods(http.MethodGet)
+	webResourceRoutes.HandleFunc("/list/{type}", webresource.ListByType).Methods(http.MethodGet)
+	webResourceRoutes.HandleFunc("/{id}", webresource.Get).Methods(http.MethodGet)
+	webResourceRoutes.HandleFunc("/{id}", webresource.Put).Methods(http.MethodPut)
+	webResourceRoutes.HandleFunc("/{id}", webresource.Delete).Methods(http.MethodDelete)
 
 	fs := http.FileServer(http.Dir("./static"))
 	r.PathPrefix("/").Handler(fs)
