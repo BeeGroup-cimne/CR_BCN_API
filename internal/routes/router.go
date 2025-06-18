@@ -20,6 +20,7 @@ func SetupRouter() *mux.Router {
 	dataRoutes.HandleFunc("/collection/vulnerability_index", data.GetVulnerabilityIndex).Methods(http.MethodPost)
 	dataRoutes.HandleFunc("/geometry_collection_vulnerability_index", data.GetGeometryVulnerabilityIndex).Methods(http.MethodPost)
 	dataRoutes.HandleFunc("/climate_shelters", data.GetClimateShelters).Methods(http.MethodPost)
+	dataRoutes.HandleFunc("/climate_shelters_details/{climate_shelter_id}", data.GetClimateSheltersDetails).Methods(http.MethodPost)
 	dataRoutes.HandleFunc("/collection/{collection_name}", data.GetCollectionHandler).Methods(http.MethodGet)
 	dataRoutes.HandleFunc("/geometry_collection/{collection_name}", data.GetGeometryCollectionHandler).Methods(http.MethodGet)
 	dataRoutes.HandleFunc("/collection/aggregation_levels/{lang}", data.GetAggregationLevelsHandler).Methods(http.MethodGet)
