@@ -47,17 +47,17 @@ func SetupRouter() *mux.Router {
 	userRoutes.HandleFunc("/access_request/list", user.AccessRequestList).Methods(http.MethodGet)
 	userRoutes.HandleFunc("/access_request/{id}/update", user.UpdateUserAccessStatus).Methods(http.MethodPut)
 
+	webResourceUserRoutes := r.PathPrefix("/webresource").Subrouter()
+	webResourceUserRoutes.Use(middleware.DataMiddleware)
+	webResourceUserRoutes.HandleFunc("/list", webresource.List).Methods(http.MethodGet)
+	webResourceUserRoutes.HandleFunc("/list/{type}", webresource.ListByType).Methods(http.MethodGet)
+
 	webResourceAdminRoutes := r.PathPrefix("/webresource").Subrouter()
 	webResourceAdminRoutes.Use(middleware.AdminMiddleware)
 	webResourceAdminRoutes.HandleFunc("/create", webresource.Post).Methods(http.MethodPost)
 	webResourceAdminRoutes.HandleFunc("/{id}", webresource.Get).Methods(http.MethodGet)
 	webResourceAdminRoutes.HandleFunc("/{id}", webresource.Put).Methods(http.MethodPut)
 	webResourceAdminRoutes.HandleFunc("/{id}", webresource.Delete).Methods(http.MethodDelete)
-
-	webResourceUserRoutes := r.PathPrefix("/webresource").Subrouter()
-	webResourceUserRoutes.Use(middleware.DataMiddleware)
-	webResourceUserRoutes.HandleFunc("/list", webresource.List).Methods(http.MethodGet)
-	webResourceUserRoutes.HandleFunc("/list/{type}", webresource.ListByType).Methods(http.MethodGet)
 
 	fs := http.FileServer(http.Dir("./static"))
 	r.PathPrefix("/").Handler(fs)
