@@ -16,7 +16,7 @@ import (
 
 type GeoJSON struct {
 	Type     string    `json:"type"`
-	CRS      CRS       `json:"crs"`
+	CRS      *CRS      `json:"crs,omitempty"`
 	Features []Feature `json:"features"`
 }
 
@@ -34,7 +34,7 @@ type Feature struct {
 type Properties struct {
 	FID       int         `json:"fid"`
 	Reference string      `json:"reference"`
-	KPIs      interface{} `json:"kpis"`
+	KPIs      interface{} `json:"kpis,omitempty"`
 }
 
 type Geometry struct {
@@ -49,7 +49,6 @@ type MongoDoc struct {
 
 const geoJSONFilePath = "internal/data/residential_buildings_bcn.geojson"
 
-// getCollection
 func GetGeometryCollectionHandler(w http.ResponseWriter, r *http.Request) {
 	w.Header().Set("Content-Type", "application/json")
 
