@@ -12,7 +12,6 @@ import (
 	_ "go.mongodb.org/mongo-driver/mongo"
 	_ "go.mongodb.org/mongo-driver/mongo/options"
 	"log"
-	"math"
 	"net/http"
 	"time"
 )
@@ -75,12 +74,16 @@ func GetClimateShelters(w http.ResponseWriter, r *http.Request) {
 				log.Printf("El valor de %s no es del tipo esperado primitive.M", buildingID)
 				continue
 			}
-			minTime := math.MaxFloat64
+			minTime := 40.0
+			//minTime := math.MaxFloat64
 			nearestShelter := ""
 
 			for shelterID, raw := range timesMap {
 				seconds := raw.(float64)
 				minutes := seconds / 60.0
+				//if buildingID == "0004701DF3800C" {
+				//	print(minutes)
+				//}
 				if _, exists := filteredSheltersSet[shelterID]; exists && minutes < minTime {
 					minTime = minutes
 					nearestShelter = shelterID

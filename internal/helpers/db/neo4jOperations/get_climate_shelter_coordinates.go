@@ -19,7 +19,7 @@ func GetClimateShelterCoordinates(date string, characteristics map[string]bool, 
 	selectedCharacteristics := []string{}
 	for key, value := range characteristics {
 		if value {
-			selectedCharacteristics = append(selectedCharacteristics, "ns1__has_"+key)
+			selectedCharacteristics = append(selectedCharacteristics, key)
 		}
 	}
 	selectedBuildingType := []string{}
@@ -46,9 +46,16 @@ func GetClimateShelterCoordinates(date string, characteristics map[string]bool, 
 			"WITH schedule, n, p, currentDate, weekday, hour " +
 			"UNWIND (CASE WHEN size(schedule.periods) = 0 THEN [NULL] ELSE schedule.periods END) AS period " +
 			"WITH schedule, n, p, weekday, hour, period, currentDate " +
-			"WHERE period IS NULL OR ( currentDate.month >= period.month_start AND currentDate.month <= period.month_end AND currentDate.day >= period.day_start AND currentDate.day <= period.day_end) " +
-			"UNWIND schedule.weekly_profile AS profile WITH profile, n, p,  weekday, hour WHERE weekday IN profile.days " +
-			"UNWIND profile.opening_hours AS opening WITH opening, n, p, hour WHERE opening.hour_start <= hour AND opening.hour_end >= hour "
+			"WHERE period IS NULL " +
+			"OR (( period.month_start <= period.month_end AND currentDate.month >= period.month_start AND currentDate.month <= period.month_end AND currentDate.day >= period.day_start AND currentDate.day <= period.day_end) " +
+			"OR ( period.month_start > period.month_end AND ( currentDate.month >= period.month_start OR currentDate.month <= period.month_end) AND currentDate.day >= period.day_start AND currentDate.day <= period.day_end)) " +
+			"UNWIND schedule.weekly_profile AS profile " +
+			"WITH profile, n, weekday, hour, p  " +
+			"WHERE weekday IN profile.days " +
+			"UNWIND profile.opening_hours AS opening " +
+			"WITH opening, n, hour, p " +
+			"WHERE ((opening.hour_start <= opening.hour_end AND opening.hour_start <= hour AND opening.hour_end >= hour) " +
+			"OR(opening.hour_start > opening.hour_end AND (hour >= opening.hour_start OR hour <= opening.hour_end))) "
 	}
 
 	query += "RETURN apoc.map.fromPairs(collect([n.ns1__climateShelterId, [p.ns1__x_coordinate, p.ns1__y_coordinate]])) AS result"

@@ -22,7 +22,7 @@ func GetClimateCommunicationsHandler(w http.ResponseWriter, r *http.Request) {
 
 	collection := database.MongoClient.Database("cr_bcn_kpis").Collection("climate_communications")
 
-	ctx, cancel := context.WithTimeout(context.Background(), 30*time.Second)
+	ctx, cancel := context.WithTimeout(context.Background(), 50*time.Second)
 	defer cancel()
 
 	projection := bson.D{

@@ -15,7 +15,7 @@ func GetFilteredClimateShelter(date string, characteristics map[string]bool, bui
 	selectedCharacteristics := []string{}
 	for key, value := range characteristics {
 		if value {
-			selectedCharacteristics = append(selectedCharacteristics, "ns1__has_"+key)
+			selectedCharacteristics = append(selectedCharacteristics, key)
 		}
 	}
 	selectedBuildingType := []string{}
@@ -34,17 +34,22 @@ func GetFilteredClimateShelter(date string, characteristics map[string]bool, bui
 	}
 
 	if date != "" {
-		query += "WITH replace(replace(n.ns1__schedule, '&apos;', '\\''), '\\'', '\\\"') AS cleanedJson, " +
-			"date($currentDate) AS currentDate, $weekday AS weekday, $hour AS hour, n " +
-			"WITH apoc.convert.fromJsonList(cleanedJson) AS scheduleJson, n, currentDate, weekday, hour " +
-			"UNWIND scheduleJson AS outerList " +
-			"UNWIND outerList AS schedule " +
-			"WITH schedule, n, currentDate, weekday, hour " +
-			"UNWIND (CASE WHEN size(schedule.periods) = 0 THEN [NULL] ELSE schedule.periods END) AS period " +
-			"WITH schedule, n, weekday, hour, period, currentDate " +
-			"WHERE period IS NULL OR ( currentDate.month >= period.month_start AND currentDate.month <= period.month_end AND currentDate.day >= period.day_start AND currentDate.day <= period.day_end) " +
-			"UNWIND schedule.weekly_profile AS profile WITH profile, n, weekday, hour WHERE weekday IN profile.days " +
-			"UNWIND profile.opening_hours AS opening WITH opening, n, hour WHERE opening.hour_start <= hour AND opening.hour_end >= hour "
+		query +=
+			"WITH replace(replace(n.ns1__schedule, '&apos;', '\\''), '\\'', '\\\"') AS cleanedJson, " +
+				"date($currentDate) AS currentDate, $weekday AS weekday, $hour AS hour, n " +
+				"WITH apoc.convert.fromJsonList(cleanedJson) AS scheduleJson, n, currentDate, weekday, hour " +
+				"UNWIND scheduleJson AS outerList " +
+				"UNWIND outerList AS schedule " +
+				"WITH schedule, n, currentDate, weekday, hour " +
+				"UNWIND (CASE WHEN size(schedule.periods) = 0 THEN [NULL] ELSE schedule.periods END) AS period " +
+				"WITH schedule, n, weekday, hour, period, currentDate " +
+				"WHERE period IS NULL " +
+				"OR (( period.month_start <= period.month_end AND currentDate.month >= period.month_start AND currentDate.month <= period.month_end AND currentDate.day >= period.day_start AND currentDate.day <= period.day_end) " +
+				"OR ( period.month_start > period.month_end AND ( currentDate.month >= period.month_start OR currentDate.month <= period.month_end) AND currentDate.day >= period.day_start AND currentDate.day <= period.day_end)) " +
+				"UNWIND schedule.weekly_profile AS profile WITH profile, n, weekday, hour WHERE weekday IN profile.days " +
+				"UNWIND profile.opening_hours AS opening WITH opening, n, hour " +
+				"WHERE ((opening.hour_start <= opening.hour_end AND opening.hour_start <= hour AND opening.hour_end >= hour) " +
+				"OR(opening.hour_start > opening.hour_end AND (hour >= opening.hour_start OR hour <= opening.hour_end))) "
 	}
 
 	query += "RETURN n.ns1__climateShelterId AS result"
