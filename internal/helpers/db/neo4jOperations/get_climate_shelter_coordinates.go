@@ -68,22 +68,24 @@ func GetClimateShelterCoordinates(date string, characteristics map[string]bool, 
 	session := driver.NewSession(context.Background(), neo4j.SessionConfig{})
 	defer database.CloseNeo4jSession(session)
 
-	layout := time.RFC3339Nano
-	t, err := time.Parse(layout, date)
-
-	if err != nil {
-		panic(err)
-	}
-	currentDate := t.Format("2006-01-02")
-	weekday := t.Weekday().String()
-	hour := t.Format("15:04")
-
 	params := map[string]any{
 		"selectedCharacteristics": selectedCharacteristics,
 		"selectedBuildingType":    selectedBuildingType,
-		"weekday":                 weekday,
-		"currentDate":             currentDate,
-		"hour":                    hour,
+	}
+
+	if date != "" {
+		layout := time.RFC3339Nano
+		t, err := time.Parse(layout, date)
+		if err != nil {
+			return nil, err
+		}
+		currentDate := t.Format("2006-01-02")
+		weekday := t.Weekday().String()
+		hour := t.Format("15:04")
+
+		params["currentDate"] = currentDate
+		params["weekday"] = weekday
+		params["hour"] = hour
 	}
 
 	result, err := session.Run(context.Background(), query, params)

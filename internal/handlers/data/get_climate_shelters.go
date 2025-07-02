@@ -23,11 +23,13 @@ type RequestPayload struct {
 }
 
 type ResponsePayload struct {
-	Buildings        map[string]float64       `json:"buildings"`
-	Shelters         map[string][]interface{} `json:"shelters"`
-	BuildingShelters map[string]string        `json:"building_shelters"`
-	NoBuilding       map[string]int           `json:"n_building_wo_shelter"`
-	NumberBuildings  int                      `json:"number_buildings"`
+	Buildings           map[string]float64       `json:"buildings"`
+	Shelters            map[string][]interface{} `json:"shelters"`
+	BuildingShelters    map[string]string        `json:"building_shelters"`
+	NoBuilding          map[string]int           `json:"n_building_wo_shelter"`
+	NumberBuildings     int                      `json:"number_buildings"`
+	NumberShelters      int                      `json:"number_shelters"`
+	NumberTotalShelters int                      `json:"number_total_shelters"`
 }
 
 type Neo4jService struct {
@@ -54,7 +56,7 @@ func GetClimateShelters(w http.ResponseWriter, r *http.Request) {
 	totalBuildings := 0
 
 	shelterSet := map[string]struct{}{}
-	filtered_shelters, err := neo4jOperations.GetFilteredClimateShelter(payload.Date, payload.Characteristics, payload.BuildingType)
+	filtered_shelters, filtered_n_shelters, total_n_shelters, err := neo4jOperations.GetFilteredClimateShelter(payload.Date, payload.Characteristics, payload.BuildingType)
 	print(filtered_shelters)
 	filteredSheltersSet := make(map[string]struct{}, len(filtered_shelters))
 	for _, shelter := range filtered_shelters {
@@ -108,11 +110,13 @@ func GetClimateShelters(w http.ResponseWriter, r *http.Request) {
 	}
 
 	res := ResponsePayload{
-		Buildings:        buildings,
-		Shelters:         shelters,
-		BuildingShelters: buildingShelters,
-		NoBuilding:       noBuilding,
-		NumberBuildings:  totalBuildings,
+		Buildings:           buildings,
+		Shelters:            shelters,
+		BuildingShelters:    buildingShelters,
+		NoBuilding:          noBuilding,
+		NumberBuildings:     totalBuildings,
+		NumberShelters:      filtered_n_shelters,
+		NumberTotalShelters: total_n_shelters,
 	}
 
 	w.Header().Set("Content-Type", "application/json")
