@@ -15,8 +15,23 @@ import (
 func GetClimateCommunicationsHandler(w http.ResponseWriter, r *http.Request) {
 	w.Header().Set("Content-Type", "application/json")
 
-	if r.Method != http.MethodGet {
+	if r.Method != http.MethodPost {
 		http.Error(w, "Invalid request method", http.StatusMethodNotAllowed)
+		return
+	}
+
+	type RequestBody struct {
+		References []string `json:"references"`
+	}
+
+	var input RequestBody
+	if err := json.NewDecoder(r.Body).Decode(&input); err != nil {
+		http.Error(w, "Invalid JSON body", http.StatusBadRequest)
+		log.Println("Invalid JSON body:", err)
+		return
+	}
+	if len(input.References) == 0 {
+		http.Error(w, "No references provided", http.StatusBadRequest)
 		return
 	}
 
@@ -31,7 +46,11 @@ func GetClimateCommunicationsHandler(w http.ResponseWriter, r *http.Request) {
 		{"metadata", 1},
 		{"communications", 1},
 	}
-	filter := bson.D{}
+	filter := bson.M{
+		"building_reference": bson.M{
+			"$in": input.References,
+		},
+	}
 
 	cursor, err := collection.Find(ctx, filter, options.Find().SetProjection(projection).SetAllowDiskUse(true))
 	if err != nil {
