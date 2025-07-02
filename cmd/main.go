@@ -2,17 +2,18 @@ package main
 
 import (
 	"github.com/joho/godotenv"
+	_ "go-api/docs"
 	"go-api/internal/database"
 	"go-api/internal/routes"
 	"log"
 	"net/http"
 )
 
-// @title My API
+// @title (CRAPI) Climate Ready Barcelona API
 // @version 1.0
 // @description This is an example API with Swagger documentation using mux.
 // @host localhost:8090
-// @BasePath /api/v1
+// @BasePath /
 func main() {
 	err := godotenv.Load()
 	if err != nil {

@@ -2,6 +2,7 @@ package routes
 
 import (
 	"github.com/gorilla/mux"
+	httpSwagger "github.com/swaggo/http-swagger"
 	"go-api/internal/handlers/auth"
 	"go-api/internal/handlers/data"
 	"go-api/internal/handlers/user"
@@ -13,10 +14,10 @@ import (
 func SetupRouter() *mux.Router {
 	r := mux.NewRouter()
 	r.Use(middleware.CorsMiddleware)
+	r.PathPrefix("/swagger/").Handler(httpSwagger.WrapHandler)
 	dataRoutes := r.PathPrefix("/data").Subrouter()
 	dataRoutes.Use(middleware.DataMiddleware)
-	//dataRoutes.HandleFunc("/swagger/*", httpSwagger.WrapHandler)
-	dataRoutes.HandleFunc("/climate_communications", data.GetClimateCommunicationsHandler).Methods(http.MethodGet)
+	dataRoutes.HandleFunc("/climate_communications", data.GetClimateCommunicationsHandler).Methods(http.MethodPost)
 	dataRoutes.HandleFunc("/collection/vulnerability_index", data.GetVulnerabilityIndex).Methods(http.MethodPost)
 	dataRoutes.HandleFunc("/geometry_collection_vulnerability_index", data.GetGeometryVulnerabilityIndex).Methods(http.MethodPost)
 	dataRoutes.HandleFunc("/climate_shelters", data.GetClimateShelters).Methods(http.MethodPost)
