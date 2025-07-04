@@ -10,6 +10,16 @@ import (
 	"net/http"
 )
 
+// GetClimateSheltersDetails godoc
+// @Summary Get details of a specific climate shelter
+// @Description Returns detailed information about a specific climate shelter identified by ID
+// @Tags Climate shelters
+// @Accept json
+// @Produce json
+// @Param climate_shelter_id path string true "Climate Shelter ID"
+// @Param payload body RequestPayload true "Request payload with date and filters"
+// @Security BearerAuth
+// @Router /data/climate_shelters_details/{climate_shelter_id} [post]
 func GetClimateSheltersDetails(w http.ResponseWriter, r *http.Request) {
 	var payload RequestPayload
 	json.NewDecoder(r.Body).Decode(&payload)

@@ -19,6 +19,19 @@ type Indicator struct {
 	Location        map[string]interface{} `json:"location"`
 }
 
+// GetIndicatorsByReferenceHandler returns all KPI values for a given reference.
+// @Summary Get indicators by reference
+// @Description Retrieves all KPI values for a specific reference and aggregation level.
+// @Tags Indicators
+// @Produce json
+// @Param aggregation_level path string true "Aggregation level" Enums(building, census_tract)
+// @Param reference path string true "Reference ID"
+// @Success 200 {object} models.Indicator "Indicator values for the reference"
+// @Failure 400 {object} models.HTTPError "Missing or invalid parameters"
+// @Failure 404 {object} models.HTTPError "Reference not found"
+// @Failure 500 {object} models.HTTPError "Database query error"
+// @Security BearerAuth
+// @Router /data/collection/indicators_by_reference/{aggregation_level}/{reference} [get]
 func GetIndicatorsByReferenceHandler(w http.ResponseWriter, r *http.Request) {
 	w.Header().Set("Content-Type", "application/json")
 

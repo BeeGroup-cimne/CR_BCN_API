@@ -12,6 +12,15 @@ import (
 	"net/http"
 )
 
+// @Summary Login
+// @Description Authenticates a user and returns a JWT token
+// @Tags Auth
+// @Accept json
+// @Produce json
+// @Param credentials body models.LoginRequest true "User credentials"
+// @Success 200 {object} models.LoginResponse "JWT Token"
+// @Failure 401 {object} models.HTTPError "Unauthorized"
+// @Router /auth/login [post]
 func Login(w http.ResponseWriter, r *http.Request) {
 	if r.Method != http.MethodPost {
 		http.Error(w, "Invalid request method", http.StatusMethodNotAllowed)

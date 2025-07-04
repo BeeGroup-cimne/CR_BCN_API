@@ -15,6 +15,18 @@ import (
 	"time"
 )
 
+// GetAggregationLevelsHandler godoc
+// @Summary Get available aggregation levels with translation
+// @Description Returns a map of translated aggregation level names (in the specified language) mapped to their keys.
+// @Tags Aggregation
+// @Accept json
+// @Produce json
+// @Param lang path string true "Language code (e.g., 'en', 'es', 'ca')"
+// @Success 200 {object} map[string]string
+// @Failure 405 {object} models.HTTPError "Invalid request method"
+// @Failure 500 {object} models.HTTPError "Database query or decoding error"
+// @Security BearerAuth
+// @Router /data/collection/aggregation_levels/{lang} [get]
 func GetAggregationLevelsHandler(w http.ResponseWriter, r *http.Request) {
 	w.Header().Set("Content-Type", "application/json")
 
