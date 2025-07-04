@@ -14,7 +14,7 @@ import (
 
 // @Summary Login
 // @Description Authenticates a user and returns a JWT token
-// @Tags auth
+// @Tags Auth
 // @Accept json
 // @Produce json
 // @Param credentials body models.LoginRequest true "User credentials"
