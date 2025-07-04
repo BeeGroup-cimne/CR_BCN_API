@@ -73,9 +73,3 @@ Email us!
 This project is licensed under the **EUPL License**. See the [LICENSE](./LICENSE) file for details.
 
 ---
-
-[//]: # (docker buildx build --platform linux/amd64,linux/arm64 --push -t docker.tech.beegroup-cimne.com/crbcn_api/go-api . --provenance=false)
-[//]: # (kubectl apply -f 'C:\Proyectos\BEE\go-api\go-api-service.yaml'
-[//]: # (kubectl apply -f 'C:\Proyectos\BEE\go-api\go-api-deployment.yaml')
-[//]: # (kubectl create secret generic crbcn-api-secret --from-file=.env --namespace data-api)
-[//]: # (swag init -g cmd/main.go)
