@@ -12,6 +12,19 @@ import (
 	"time"
 )
 
+// GetClimateCommunicationsHandler returns active climate communications grouped by date, indicator and metadata.
+// @Summary      Get active climate communications
+// @Description  Returns a map of active communications grouped by date and indicator, filtered by building references.
+// @Tags         Climate communications
+// @Accept       json
+// @Produce      json
+// @Param        references  body      models.ReferenceRequest  true  "List of building references to filter by"
+// @Success      200         {object}  map[string]map[string][]models.CommunicationGroup  "Grouped communications"
+// @Failure      400         {object}  models.Message  "Invalid input"
+// @Failure      405         {object}  models.Message  "Invalid method"
+// @Failure      500         {object}  models.Message  "Internal server error"
+// @Security BearerAuth
+// @Router       /data/climate_communications [post]
 func GetClimateCommunicationsHandler(w http.ResponseWriter, r *http.Request) {
 	w.Header().Set("Content-Type", "application/json")
 

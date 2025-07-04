@@ -13,6 +13,18 @@ import (
 	"time"
 )
 
+// GetIndicatorsByReferenceDataHandler returns metadata for all indicators for a given aggregation level.
+// @Summary Get indicators metadata by reference
+// @Description Retrieves the metadata of all indicators (e.g., name, unit, description, labels) for a specific aggregation level, translated to the specified language.
+// @Tags Indicators
+// @Produce json
+// @Param aggregation_level path string true "Aggregation level" Enums(building)
+// @Param lang path string true "Language" Enums(en, es, ca)
+// @Success 200 {object} map[string]interface{} "List of indicators with multilingual fields translated"
+// @Failure 400 {object} models.HTTPError "Invalid or missing parameters"
+// @Failure 500 {object} models.HTTPError "Database query error"
+// @Security BearerAuth
+// @Router /data/collection/indicators_by_reference_data/{aggregation_level}/{lang} [get]
 func GetIndicatorsByReferenceDataHandler(w http.ResponseWriter, r *http.Request) {
 	w.Header().Set("Content-Type", "application/json")
 

@@ -14,6 +14,18 @@ import (
 	"time"
 )
 
+// GetIndicatorsByGroupHandler returns KPIs grouped by indicator group for a given aggregation level.
+// @Summary Get grouped indicators
+// @Description Returns a list of KPIs grouped by their category, translated into the specified language.
+// @Tags Indicators
+// @Produce json
+// @Param aggregation_level path string true "Aggregation level" Enums(building, census_tract)
+// @Param lang path string true "Language code" Enums(en, es, ca)
+// @Success 200 {object} map[string]map[string]string "Group name as key and map of KPI name to KPI key as value"
+// @Failure 400 {object} models.HTTPError "Invalid aggregation level"
+// @Failure 500 {object} models.HTTPError "Database query or decoding error"
+// @Security BearerAuth
+// @Router /data/collection/indicators_by_group/{aggregation_level}/{lang} [get]
 func GetIndicatorsByGroupHandler(w http.ResponseWriter, r *http.Request) {
 	w.Header().Set("Content-Type", "application/json")
 

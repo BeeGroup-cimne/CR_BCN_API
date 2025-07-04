@@ -49,6 +49,19 @@ type MongoDoc struct {
 
 const geoJSONFilePath = "internal/data/residential_buildings_bcn.geojson"
 
+// GetGeometryCollectionHandler godoc
+// @Summary Get a GeoJSON file with KPIs merged from the specified MongoDB collection
+// @Description Returns a GeoJSON collection where each feature includes the KPI values from the given collection. If the collection name ends with `_data`, it returns all data. Otherwise, it filters by `calculation_date`.
+// @Tags Indicators
+// @Accept json
+// @Produce application/geo+json
+// @Param collection_name path string true "Name of the MongoDB collection"
+// @Param calculation_date query string false "Calculation date to filter the KPIs (required if collection name does not end with '_data')"
+// @Success 200 {object} GeoJSON
+// @Failure 400 {string}  string  "No data found for the given date"
+// @Failure 500 {string}  string  "Internal server error while generating GeoJSON"
+// @Security BearerAuth
+// @Router /data/geometry_collection/{collection_name} [get]
 func GetGeometryCollectionHandler(w http.ResponseWriter, r *http.Request) {
 	w.Header().Set("Content-Type", "application/json")
 

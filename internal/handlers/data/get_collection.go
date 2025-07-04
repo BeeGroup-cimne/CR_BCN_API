@@ -17,13 +17,14 @@ import (
 // GetCollectionHandler returns documents from a MongoDB collection.
 // @Summary      Get documents from collection
 // @Description  Returns documents from the specified MongoDB collection. If the collection name does not end with "_data", the "calculation_date" query parameter is required.
-// @Tags         example
+// @Tags         Indicators
 // @Param        collection_name  path      string  true   "Name of the MongoDB collection"
 // @Param        calculation_date query     string  false  "Calculation date (required unless collection ends with '_data')"
 // @Success      200  {array}     object    "List of documents from the collection"
 // @Failure      400  {object}    models.Message  "Missing or invalid parameters"
 // @Failure      405  {object}    models.Message  "Invalid HTTP method"
 // @Failure      500  {object}    models.Message  "Internal server error"
+// @Security BearerAuth
 // @Router       /data/collection/{collection_name} [get]
 func GetCollectionHandler(w http.ResponseWriter, r *http.Request) {
 	w.Header().Set("Content-Type", "application/json")

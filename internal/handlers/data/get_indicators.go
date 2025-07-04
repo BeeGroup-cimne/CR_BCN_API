@@ -15,6 +15,16 @@ import (
 	"time"
 )
 
+// GetIndicatorsHandler obtiene la lista de indicadores con traducción en el idioma dado
+// @Summary Get indicators
+// @Description Returns a map of translated indicator names to their keys
+// @Tags Indicators
+// @Produce json
+// @Param lang path string true "Language (e.g. 'en', 'es', 'ca')"
+// @Success 200 {object} map[string]string
+// @Failure 500 {object} models.HTTPError "Database query or decoding error"
+// @Security BearerAuth
+// @Router /data/collection/indicators/{lang} [get]
 func GetIndicatorsHandler(w http.ResponseWriter, r *http.Request) {
 	w.Header().Set("Content-Type", "application/json")
 

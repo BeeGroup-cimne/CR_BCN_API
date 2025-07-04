@@ -11,9 +11,13 @@ import (
 
 // @title (CRAPI) Climate Ready Barcelona API
 // @version 1.0
-// @description This is an example API with Swagger documentation using mux.
+// @description This is the Climate Ready Barcelona API.
 // @host localhost:8090
 // @BasePath /
+// @securityDefinitions.apikey BearerAuth
+// @in header
+// @name Authorization
+// @description Provide your access token like this: "Bearer {token}"
 func main() {
 	err := godotenv.Load()
 	if err != nil {
