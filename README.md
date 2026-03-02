@@ -73,3 +73,5 @@ Email us!
 This project is licensed under the **EUPL License**. See the [LICENSE](./LICENSE) file for details.
 
 ---
+
+docker buildx build --platform linux/amd64,linux/arm64 --push -t docker.tech.beegroup-cimne.com/crbcn_api/go-api . --provenance=false

@@ -8,7 +8,7 @@ metadata:
   namespace: data-api
 spec:
   ports:
-    - port: 8000
+    - port: 8080
       protocol: TCP
       targetPort: 8090
   selector:
@@ -34,7 +34,7 @@ spec:
           service:
             name: crbcn-go-api-service
             port:
-              number: 8000
+              number: 8080
   tls:
   - hosts:
     - "crbcn-go-api.kube.tech.beegroup-cimne.com"
