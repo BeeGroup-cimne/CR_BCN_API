@@ -20,14 +20,13 @@ func ConnectMongoDB() {
 
 	client, err := mongo.Connect(ctx, options.Client().ApplyURI(uri))
 	if err != nil {
-		log.Fatal("Error conectando a MongoDB: ", err)
+		log.Fatal("Error connecting to MongoDB: ", err)
 	}
 
-	// Verificar la conexión
 	if err := client.Ping(ctx, nil); err != nil {
-		log.Fatal("Error al hacer ping a MongoDB: ", err)
+		log.Fatal("Error pinging to MongoDB: ", err)
 	}
 
 	MongoClient = client
-	log.Println("Conectado a MongoDB!")
+	log.Println("Connect to MongoDB!")
 }
