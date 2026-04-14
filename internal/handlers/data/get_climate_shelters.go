@@ -70,7 +70,6 @@ func GetClimateShelters(w http.ResponseWriter, r *http.Request) {
 
 	shelterSet := map[string]struct{}{}
 	filtered_shelters, filtered_n_shelters, total_n_shelters, err := neo4jOperations.GetFilteredClimateShelter(payload.Date, payload.Characteristics, payload.BuildingType)
-	print(filtered_shelters)
 	filteredSheltersSet := make(map[string]struct{}, len(filtered_shelters))
 	for _, shelter := range filtered_shelters {
 		filteredSheltersSet[shelter] = struct{}{}
