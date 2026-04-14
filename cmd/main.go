@@ -5,8 +5,11 @@ import (
 	_ "go-api/docs"
 	"go-api/internal/database"
 	"go-api/internal/routes"
-	"log"
 	"net/http"
+
+	//"go-api/internal/database"
+
+	"log"
 )
 
 // @title 🚀 CRAPI – Climate Ready Barcelona API
@@ -25,8 +28,10 @@ func main() {
 	}
 
 	database.ConnectMongoDB()
+	database.ConnectHBaseDB()
+
 	r := routes.SetupRouter()
 
-	log.Println("Server running on port 8090")
+	//log.Println("Server running on port 8090")
 	log.Fatal(http.ListenAndServe(":8090", r))
 }
