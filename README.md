@@ -20,7 +20,7 @@ Key features include:
 
 - Go (Golang) `v1.23+`
 - Swagger (OpenAPI) for interactive documentation
-- MongoDB / Neo4J
+- MongoDB / Neo4J / HBase
 - Docker 
 - JWT (for authentication)
 - K8s 
