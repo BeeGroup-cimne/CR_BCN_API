@@ -29,7 +29,11 @@ func SetupRouter() *mux.Router {
 	dataRoutes.HandleFunc("/collection/indicators_by_group/{aggregation_level}/{lang}", data.GetIndicatorsByGroupHandler).Methods(http.MethodGet)
 	dataRoutes.HandleFunc("/collection/indicators_by_reference/{aggregation_level}/{reference}", data.GetIndicatorsByReferenceHandler).Methods(http.MethodGet)
 	dataRoutes.HandleFunc("/collection/indicators_by_reference_data/{aggregation_level}/{lang}", data.GetIndicatorsByReferenceDataHandler).Methods(http.MethodGet)
-	dataRoutes.HandleFunc("/indoor_sensor_data/{property}/{aggregation_level}/{aggregation_time}/{start}:{end}", data.GetIndoorIndicators).Methods(http.MethodGet)
+	dataRoutes.HandleFunc("/indoor_sensor_data/{property}/building/{aggregation_time}/{start}:{end}", data.GetIndoorIndicators).Methods(http.MethodGet)
+
+	adminDataRoutes := r.PathPrefix("/data").Subrouter()
+	adminDataRoutes.Use(middleware.AdminMiddleware)
+	adminDataRoutes.HandleFunc("/indoor_sensor_data/{property}/{aggregation_level}/{aggregation_time}/{start}:{end}", data.GetIndoorIndicators).Methods(http.MethodGet)
 
 	authRoutes := r.PathPrefix("/auth").Subrouter()
 	authRoutes.HandleFunc("/login", auth.Login).Methods(http.MethodPost)

@@ -106,8 +106,7 @@ func ComputeIndoorIndicatorsGrouped(
 
 			stat := models.IndoorStats{
 				IntervalStart: bucket,
-				IntervalEnd:   bucket + int64(duration.Seconds()),
-				Aggregation:   aggregation,
+				IntervalEnd:   bucket + int64(duration.Seconds()) - 1,
 				Mean:          mean,
 				Min:           acc.Min,
 				Max:           acc.Max,

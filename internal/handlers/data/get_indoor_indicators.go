@@ -14,9 +14,9 @@ import (
 // @Summary      Get indoor sensor indicators
 // @Description  Returns indoor sensor indicators for a property within a time range.
 // @Tags         Indicators
-// @Param        property           path      string  true   "Property name"
-// @Param        start              path      integer true   "Start timestamp (unix)"
-// @Param        end                path      integer true   "End timestamp (unix)"
+// @Param        property           path      string  true   "Property name(temperature, humidity, co2)"
+// @Param        start              path      integer true   "Start timestamp (Unix timestamp)"
+// @Param        end                path      integer true   "End timestamp (Unix timestamp)"
 // @Param        aggregation_level  query     string  false  "Aggregation level (dwelling or building). Default: building"
 // @Param        aggregation_time   query     string  false  "Temporal aggregation (e.g., PT15M, PT1H, P1D)"
 // @Success      200  {array}       models.IndoorStats             "Aggregated indoor indicators"

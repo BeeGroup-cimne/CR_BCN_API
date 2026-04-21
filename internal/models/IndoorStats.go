@@ -1,9 +1,8 @@
 package models
 
 type IndoorStats struct {
-	IntervalStart int64  `json:"interval_start"`
-	IntervalEnd   int64  `json:"interval_end"`
-	Aggregation   string `json:"aggregation"`
+	IntervalStart int64 `json:"interval_start"`
+	IntervalEnd   int64 `json:"interval_end"`
 
 	Mean float64 `json:"mean"`
 	Min  float64 `json:"min"`
