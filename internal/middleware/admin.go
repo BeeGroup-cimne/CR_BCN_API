@@ -30,7 +30,7 @@ func AdminMiddleware(next http.Handler) http.Handler {
 		}
 
 		if claims.Role != userRoles.Admin {
-			http.Error(w, "User does not have enough permissions", http.StatusUnauthorized)
+			http.Error(w, "Forbidden", http.StatusForbidden)
 			return
 		}
 
