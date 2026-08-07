@@ -1,0 +1,8 @@
+.env
+.env.*
+*.pem
+*.yaml
+checkdatabase.go
+eks/
+k8s/
+.git

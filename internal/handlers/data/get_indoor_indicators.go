@@ -4,7 +4,7 @@ import (
 	"encoding/json"
 	"github.com/gorilla/mux"
 	"go-api/internal/database"
-	"go-api/internal/helpers/db/hbase"
+	"go-api/internal/helpers/db/cassandra"
 	"go-api/internal/helpers/utils"
 	"net/http"
 	"strconv"
@@ -38,7 +38,6 @@ func GetIndoorIndicators(w http.ResponseWriter, r *http.Request) {
 	vars := mux.Vars(r)
 
 	property := vars["property"]
-	table := "climres_skyspark:" + property //+ "_data"
 	aggregation_level := vars["aggregation_level"]
 	aggregation_time := vars["aggregation_time"]
 	start := vars["start"]
@@ -56,14 +55,19 @@ func GetIndoorIndicators(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	rows, err := hbase.GetIndoorSensorData(table, startTS, endTS)
+	if aggregation_level != "dwelling" {
+		aggregation_level = "building"
+	}
+
+	var dwellingsFilter []string
+	if aggregation_level == "building" {
+		dwellingsFilter = database.BuildingAggregationDwellings
+	}
+
+	rows, err := cassandra.GetIndoorSensorData(cassandra.TranslateProperty(property), startTS, endTS, dwellingsFilter)
 	if err != nil {
 		http.Error(w, err.Error(), http.StatusInternalServerError)
 		return
-	}
-
-	if aggregation_level != "dwelling" {
-		aggregation_level = "building"
 	}
 
 	stats := utils.ComputeIndoorIndicatorsGrouped(

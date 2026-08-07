@@ -15,7 +15,7 @@ import (
 // @title 🚀 CRAPI – Climate Ready Barcelona API
 // @version 1.0
 // @description 🌍 Climate Ready BCN – Smart Data for a Resilient Future
-// @host crbcn-go-api.kube.tech.beegroup-cimne.com
+// @host crbcn-go-api.kubernetes.tech.beegroup-cimne.com
 // @BasePath /
 // @securityDefinitions.apikey BearerAuth
 // @in header
@@ -28,7 +28,8 @@ func main() {
 	}
 
 	database.ConnectMongoDB()
-	database.ConnectHBaseDB()
+	database.ConnectCassandraDB()
+	//database.ConnectHBaseDB()
 
 	r := routes.SetupRouter()
 

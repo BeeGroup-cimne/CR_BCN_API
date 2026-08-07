@@ -31,7 +31,7 @@ Key features include:
 
 Explore the interactive API documentation via Swagger UI:
 
-🔗 [`/swagger/index.html`](https://crbcn-go-api.kube.tech.beegroup-cimne.com/swagger/index.html#/)
+🔗 [`/swagger/index.html`](https://crbcn-go-api.kubernetes.tech.beegroup-cimne.com/swagger/index.html#/)
 
 ---
 
@@ -74,4 +74,6 @@ This project is licensed under the **EUPL License**. See the [LICENSE](./LICENSE
 
 ---
 
-docker buildx build --platform linux/amd64,linux/arm64 --push -t docker.tech.beegroup-cimne.com/crbcn_api/go-api . --provenance=false
+#docker buildx build --platform linux/amd64,linux/arm64 --push -t docker.tech.beegroup-cimne.com/crbcn_api/go-api . --provenance=false
+docker buildx build --platform linux/amd64,linux/arm64 --push -t 853583158095.dkr.ecr.eu-west-1.amazonaws.com/ecr-crbcn-api . --provenance=false
+kubectl create secret generic crbcn-api-secret --from-file=.env=.env -n crbcn --dry-run=client -o yaml | kubectl apply -f -
