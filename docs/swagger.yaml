@@ -1,0 +1,740 @@
+basePath: /
+definitions:
+  data.CRS:
+    properties:
+      properties:
+        additionalProperties:
+          type: string
+        type: object
+      type:
+        type: string
+    type: object
+  data.Feature:
+    properties:
+      geometry:
+        $ref: '#/definitions/data.Geometry'
+      properties:
+        $ref: '#/definitions/data.Properties'
+      type:
+        type: string
+    type: object
+  data.GeoJSON:
+    properties:
+      crs:
+        $ref: '#/definitions/data.CRS'
+      features:
+        items:
+          $ref: '#/definitions/data.Feature'
+        type: array
+      type:
+        type: string
+    type: object
+  data.Geometry:
+    properties:
+      coordinates: {}
+      type:
+        type: string
+    type: object
+  data.Properties:
+    properties:
+      fid:
+        type: integer
+      kpis: {}
+      reference:
+        type: string
+    type: object
+  data.RequestPayload:
+    type: object
+  data.ResponsePayload:
+    properties:
+      building_shelters:
+        additionalProperties:
+          type: string
+        type: object
+      buildings:
+        additionalProperties:
+          format: float64
+          type: number
+        type: object
+      n_building_wo_shelter:
+        additionalProperties:
+          type: integer
+        type: object
+      number_buildings:
+        type: integer
+      number_shelters:
+        type: integer
+      number_total_shelters:
+        type: integer
+      shelters:
+        additionalProperties:
+          items: {}
+          type: array
+        type: object
+    type: object
+  data.Weights:
+    properties:
+      building_characteristics:
+        example: 0.3
+        type: number
+      climate_variability_extreme_events:
+        example: 0.2
+        type: number
+      demographic:
+        example: 0.2
+        type: number
+      energy:
+        example: 0.2
+        type: number
+      socio-economic:
+        example: 0.1
+        type: number
+    type: object
+  models.CommunicationGroup:
+    properties:
+      building_references:
+        example:
+        - '["1234A"'
+        - ' "5678B"]'
+        items:
+          type: string
+        type: array
+      metadata:
+        additionalProperties: {}
+        type: object
+    type: object
+  models.HTTPError:
+    properties:
+      message:
+        example: internal server error
+        type: string
+    type: object
+  models.Indicator:
+    properties:
+      kpis:
+        additionalProperties: true
+        type: object
+      reference:
+        type: string
+    type: object
+  models.IndoorStats:
+    properties:
+      interval_end:
+        type: integer
+      interval_start:
+        type: integer
+      max:
+        type: number
+      mean:
+        type: number
+      min:
+        type: number
+      p2_5:
+        type: number
+      p5:
+        type: number
+      p10:
+        type: number
+      p25:
+        type: number
+      p50:
+        type: number
+      p75:
+        type: number
+      p90:
+        type: number
+      p95:
+        type: number
+      p97_5:
+        type: number
+    type: object
+  models.LoginRequest:
+    properties:
+      email:
+        example: info@cimne.upc.edu
+        type: string
+      password:
+        example: 1234.!AB
+        type: string
+    type: object
+  models.LoginResponse:
+    properties:
+      refresh_token:
+        type: string
+      refresh_token_expires_at:
+        type: integer
+      role:
+        type: string
+      token:
+        example: eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9...
+        type: string
+      token_expires_at:
+        type: integer
+    type: object
+  models.Message:
+    properties:
+      message:
+        type: string
+      status:
+        type: string
+    type: object
+  models.ReferenceRequest:
+    properties:
+      references:
+        example:
+        - '[0005401DF3800E'
+        - 0005403DF3800E
+        - 0005404DF3800E]
+        items:
+          type: string
+        type: array
+    type: object
+host: crbcn-go-api.kubernetes.tech.beegroup-cimne.com
+info:
+  contact: {}
+  description: "\U0001F30D Climate Ready BCN – Smart Data for a Resilient Future"
+  title: "\U0001F680 CRAPI – Climate Ready Barcelona API"
+  version: "1.0"
+paths:
+  /auth/login:
+    post:
+      consumes:
+      - application/json
+      description: Authenticates a user and returns a JWT token
+      parameters:
+      - description: User credentials
+        in: body
+        name: credentials
+        required: true
+        schema:
+          $ref: '#/definitions/models.LoginRequest'
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: JWT Token
+          schema:
+            $ref: '#/definitions/models.LoginResponse'
+        "401":
+          description: Unauthorized
+          schema:
+            $ref: '#/definitions/models.HTTPError'
+      summary: Login
+      tags:
+      - Auth
+  /data/climate_communications:
+    post:
+      consumes:
+      - application/json
+      description: Returns a map of active communications grouped by date and indicator,
+        filtered by building references.
+      parameters:
+      - description: List of building references to filter by
+        in: body
+        name: references
+        required: true
+        schema:
+          $ref: '#/definitions/models.ReferenceRequest'
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: Grouped communications
+          schema:
+            additionalProperties:
+              additionalProperties:
+                items:
+                  $ref: '#/definitions/models.CommunicationGroup'
+                type: array
+              type: object
+            type: object
+        "400":
+          description: Invalid input
+          schema:
+            $ref: '#/definitions/models.Message'
+        "405":
+          description: Invalid method
+          schema:
+            $ref: '#/definitions/models.Message'
+        "500":
+          description: Internal server error
+          schema:
+            $ref: '#/definitions/models.Message'
+      security:
+      - BearerAuth: []
+      summary: Get active climate communications
+      tags:
+      - Climate communications
+  /data/climate_shelters:
+    post:
+      consumes:
+      - application/json
+      description: Returns the minimum walking time (in minutes) from each building
+        to the nearest filtered climate shelter, as well as metadata including which
+        shelter is closest and how many buildings are beyond a 10 and 20 minute threshold.
+      parameters:
+      - description: Filter parameters for shelter selection
+        in: body
+        name: payload
+        required: true
+        schema:
+          $ref: '#/definitions/data.RequestPayload'
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/data.ResponsePayload'
+        "400":
+          description: Invalid request payload
+          schema:
+            type: string
+        "500":
+          description: Internal server error
+          schema:
+            type: string
+      security:
+      - BearerAuth: []
+      summary: Get accessibility to climate shelters
+      tags:
+      - Climate shelters
+  /data/climate_shelters_details/{climate_shelter_id}:
+    post:
+      consumes:
+      - application/json
+      description: Returns detailed information about a specific climate shelter identified
+        by ID
+      parameters:
+      - description: Climate Shelter ID
+        in: path
+        name: climate_shelter_id
+        required: true
+        type: string
+      - description: Request payload with date and filters
+        in: body
+        name: payload
+        required: true
+        schema:
+          $ref: '#/definitions/data.RequestPayload'
+      produces:
+      - application/json
+      responses: {}
+      security:
+      - BearerAuth: []
+      summary: Get details of a specific climate shelter
+      tags:
+      - Climate shelters
+  /data/collection/{collection_name}:
+    get:
+      description: Returns documents from the specified MongoDB collection. If the
+        collection name does not end with "_data", the "calculation_date" query parameter
+        is required.
+      parameters:
+      - description: Name of the MongoDB collection
+        in: path
+        name: collection_name
+        required: true
+        type: string
+      - description: Calculation date (required unless collection ends with '_data')
+        in: query
+        name: calculation_date
+        type: string
+      responses:
+        "200":
+          description: List of documents from the collection
+          schema:
+            items:
+              type: object
+            type: array
+        "400":
+          description: Missing or invalid parameters
+          schema:
+            $ref: '#/definitions/models.Message'
+        "405":
+          description: Invalid HTTP method
+          schema:
+            $ref: '#/definitions/models.Message'
+        "500":
+          description: Internal server error
+          schema:
+            $ref: '#/definitions/models.Message'
+      security:
+      - BearerAuth: []
+      summary: Get documents from collection
+      tags:
+      - Indicators
+  /data/collection/aggregation_levels/{lang}:
+    get:
+      consumes:
+      - application/json
+      description: Returns a map of translated aggregation level names (in the specified
+        language) mapped to their keys.
+      parameters:
+      - description: Language code (e.g., 'en', 'es', 'ca')
+        in: path
+        name: lang
+        required: true
+        type: string
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            additionalProperties:
+              type: string
+            type: object
+        "405":
+          description: Invalid request method
+          schema:
+            $ref: '#/definitions/models.HTTPError'
+        "500":
+          description: Database query or decoding error
+          schema:
+            $ref: '#/definitions/models.HTTPError'
+      security:
+      - BearerAuth: []
+      summary: Get available aggregation levels with translation
+      tags:
+      - Aggregation
+  /data/collection/indicators/{lang}:
+    get:
+      description: Returns a map of translated indicator names to their keys
+      parameters:
+      - description: Language (e.g. 'en', 'es', 'ca')
+        in: path
+        name: lang
+        required: true
+        type: string
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            additionalProperties:
+              type: string
+            type: object
+        "500":
+          description: Database query or decoding error
+          schema:
+            $ref: '#/definitions/models.HTTPError'
+      security:
+      - BearerAuth: []
+      summary: Get indicators
+      tags:
+      - Indicators
+  /data/collection/indicators_by_group/{aggregation_level}/{lang}:
+    get:
+      description: Returns a list of KPIs grouped by their category, translated into
+        the specified language.
+      parameters:
+      - description: Aggregation level
+        enum:
+        - building
+        - census_tract
+        in: path
+        name: aggregation_level
+        required: true
+        type: string
+      - description: Language code
+        enum:
+        - en
+        - es
+        - ca
+        in: path
+        name: lang
+        required: true
+        type: string
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: Group name as key and map of KPI name to KPI key as value
+          schema:
+            additionalProperties:
+              additionalProperties:
+                type: string
+              type: object
+            type: object
+        "400":
+          description: Invalid aggregation level
+          schema:
+            $ref: '#/definitions/models.HTTPError'
+        "500":
+          description: Database query or decoding error
+          schema:
+            $ref: '#/definitions/models.HTTPError'
+      security:
+      - BearerAuth: []
+      summary: Get grouped indicators
+      tags:
+      - Indicators
+  /data/collection/indicators_by_reference/{aggregation_level}/{reference}:
+    get:
+      description: Retrieves all KPI values for a specific reference and aggregation
+        level.
+      parameters:
+      - description: Aggregation level
+        enum:
+        - building
+        - census_tract
+        in: path
+        name: aggregation_level
+        required: true
+        type: string
+      - description: Reference ID
+        in: path
+        name: reference
+        required: true
+        type: string
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: Indicator values for the reference
+          schema:
+            $ref: '#/definitions/models.Indicator'
+        "400":
+          description: Missing or invalid parameters
+          schema:
+            $ref: '#/definitions/models.HTTPError'
+        "404":
+          description: Reference not found
+          schema:
+            $ref: '#/definitions/models.HTTPError'
+        "500":
+          description: Database query error
+          schema:
+            $ref: '#/definitions/models.HTTPError'
+      security:
+      - BearerAuth: []
+      summary: Get indicators by reference
+      tags:
+      - Indicators
+  /data/collection/indicators_by_reference_data/{aggregation_level}/{lang}:
+    get:
+      description: Retrieves the metadata of all indicators (e.g., name, unit, description,
+        labels) for a specific aggregation level, translated to the specified language.
+      parameters:
+      - description: Aggregation level
+        enum:
+        - building
+        in: path
+        name: aggregation_level
+        required: true
+        type: string
+      - description: Language
+        enum:
+        - en
+        - es
+        - ca
+        in: path
+        name: lang
+        required: true
+        type: string
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: List of indicators with multilingual fields translated
+          schema:
+            additionalProperties: true
+            type: object
+        "400":
+          description: Invalid or missing parameters
+          schema:
+            $ref: '#/definitions/models.HTTPError'
+        "500":
+          description: Database query error
+          schema:
+            $ref: '#/definitions/models.HTTPError'
+      security:
+      - BearerAuth: []
+      summary: Get indicators metadata by reference
+      tags:
+      - Indicators
+  /data/collection/vulnerability_index:
+    post:
+      consumes:
+      - application/json
+      description: Returns a normalized vulnerability index (0–100) per reference
+        code, using the provided weights for each indicator category.
+      parameters:
+      - description: 'Calculation date (format: YYYY-MM-DD)'
+        in: query
+        name: calculation_date
+        required: true
+        type: string
+      - description: Weights for each KPI category
+        in: body
+        name: weights
+        required: true
+        schema:
+          $ref: '#/definitions/data.Weights'
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: Normalized vulnerability index per reference code
+          schema:
+            additionalProperties:
+              type: integer
+            type: object
+        "400":
+          description: Invalid input
+          schema:
+            $ref: '#/definitions/models.Message'
+        "404":
+          description: No data found for the given date
+          schema:
+            $ref: '#/definitions/models.Message'
+        "500":
+          description: Internal server error
+          schema:
+            $ref: '#/definitions/models.Message'
+      security:
+      - BearerAuth: []
+      summary: Compute vulnerability index
+      tags:
+      - Vulnerability
+  /data/geometry_collection/{collection_name}:
+    get:
+      consumes:
+      - application/json
+      description: Returns a GeoJSON collection where each feature includes the KPI
+        values from the given collection. If the collection name ends with `_data`,
+        it returns all data. Otherwise, it filters by `calculation_date`.
+      parameters:
+      - description: Name of the MongoDB collection
+        in: path
+        name: collection_name
+        required: true
+        type: string
+      - description: Calculation date to filter the KPIs (required if collection name
+          does not end with '_data')
+        in: query
+        name: calculation_date
+        type: string
+      produces:
+      - application/geo+json
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/data.GeoJSON'
+        "400":
+          description: No data found for the given date
+          schema:
+            type: string
+        "500":
+          description: Internal server error while generating GeoJSON
+          schema:
+            type: string
+      security:
+      - BearerAuth: []
+      summary: Get a GeoJSON file with KPIs merged from the specified MongoDB collection
+      tags:
+      - Indicators
+  /data/geometry_collection_vulnerability_index:
+    post:
+      consumes:
+      - application/json
+      description: Calculates and returns a GeoJSON file containing a normalized vulnerability
+        index per reference, based on weighted KPIs and a given calculation date.
+      parameters:
+      - description: Calculation date in YYYY-MM-DD format
+        in: query
+        name: calculation_date
+        required: true
+        type: string
+      - description: Weights for each KPI category
+        in: body
+        name: weights
+        required: true
+        schema:
+          $ref: '#/definitions/data.Weights'
+      produces:
+      - application/geo+json
+      responses:
+        "200":
+          description: OK
+          schema:
+            type: file
+        "400":
+          description: Invalid request payload or missing query parameter
+          schema:
+            type: string
+        "404":
+          description: No data found for the given date
+          schema:
+            type: string
+        "500":
+          description: Internal server error while generating GeoJSON
+          schema:
+            type: string
+      security:
+      - BearerAuth: []
+      summary: Get GeoJSON with vulnerability index
+      tags:
+      - Vulnerability
+  /data/indoor_sensor_data/{property}/building/{aggregation_time}/{start}:{end}:
+    get:
+      description: |-
+        Returns indoor sensor indicators for a property within a time range.
+        ### Usage
+        - **Admin:** can select aggregation level
+        - **Registered users:** fixed to building level
+      parameters:
+      - description: Property name (temperature, humidity, co2)
+        in: path
+        name: property
+        required: true
+        type: string
+      - description: Temporal aggregation (e.g., PT15M, PT1H, P1D)
+        in: path
+        name: aggregation_time
+        required: true
+        type: string
+      - description: Start timestamp (Unix timestamp)
+        in: path
+        name: start
+        required: true
+        type: integer
+      - description: End timestamp (Unix timestamp)
+        in: path
+        name: end
+        required: true
+        type: integer
+      responses:
+        "200":
+          description: Aggregated indoor indicators
+          schema:
+            items:
+              $ref: '#/definitions/models.IndoorStats'
+            type: array
+        "400":
+          description: Missing or invalid parameters
+          schema:
+            $ref: '#/definitions/models.Message'
+        "405":
+          description: Invalid HTTP method
+          schema:
+            $ref: '#/definitions/models.Message'
+        "500":
+          description: Internal server error
+          schema:
+            $ref: '#/definitions/models.Message'
+      security:
+      - BearerAuth: []
+      summary: Get indoor sensor indicators
+      tags:
+      - Indicators
+securityDefinitions:
+  BearerAuth:
+    description: 'Provide your access token like this: "Bearer {token}"'
+    in: header
+    name: Authorization
+    type: apiKey
+swagger: "2.0"
