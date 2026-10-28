@@ -14,6 +14,7 @@ import (
 func SetupRouter() *mux.Router {
 	r := mux.NewRouter()
 	r.Use(middleware.CorsMiddleware)
+	r.HandleFunc("/healthz", func(w http.ResponseWriter, _ *http.Request) { w.WriteHeader(http.StatusOK) }).Methods(http.MethodGet)
 	r.PathPrefix("/swagger/").Handler(httpSwagger.WrapHandler)
 	dataRoutes := r.PathPrefix("/data").Subrouter()
 	dataRoutes.Use(middleware.DataMiddleware)
