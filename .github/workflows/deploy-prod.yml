@@ -2,7 +2,7 @@ name: Deploy to Production
 
 on:
   push:
-    branches: [main]
+    branches: [ main ]
   workflow_dispatch:
 env:
   FORCE_JAVASCRIPT_ACTIONS_TO_NODE24: true
@@ -59,6 +59,13 @@ jobs:
         #   - Permís eks:DescribeCluster al policy de l'IAM user/role
         #   - L'IAM ARN afegit al EKS access management (aws-auth ConfigMap o Access Entries)
         #   - RBAC: permís per apply CronJobs/Deployments al namespace $KUBE_NAMESPACE
+      - name: Create Kubernetes Secret (sensor_building_map)
+        run: |
+          echo "${{ secrets.SENSOR_MAP_B64 }}" | base64 -d > /tmp/sensor_building_map_cassandra.json
+          kubectl -n crbcn create secret generic crbcn-go-files \
+            --from-file=sensor_building_map_cassandra.json=/tmp/sensor_building_map_cassandra.json \
+            --dry-run=client -o yaml | kubectl apply -f -
+          rm -f /tmp/sensor_building_map_cassandra.json
 
       - name: Apply Kubernetes manifests
         env:

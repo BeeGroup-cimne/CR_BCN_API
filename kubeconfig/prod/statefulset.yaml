@@ -48,6 +48,10 @@ spec:
             - name: crbcn-api-secret
               mountPath: ".env"
               subPath: ".env"
+            - name: api-files
+              mountPath: /internal/data/sensor_building_map_cassandra.json
+              subPath: sensor_building_map_cassandra.json
+              readOnly: true
       volumes:
         - name: crbcn-api-secret
           secret:
@@ -55,4 +59,7 @@ spec:
             items:
               - key: ".env"
                 path: ".env"
+        - name: api-files
+          secret:
+            secretName: crbcn-go-files
 #kubectl create secret generic crbcn-api-secret --from-file=.env=.env -n crbcn
