@@ -75,14 +75,23 @@ func LoadSensorBuildingMapFromCassandra(session *gocql.Session, fullyQualifiedTa
 		dwellingUpper := strings.ToUpper(dwelling)
 
 		// Composite key: same shape used by GetIndoorSensorData to
-		// rebuild the hash later ("{sensorID}-{dwelling}").
-		key := fmt.Sprintf("%s-%s", sensorID, dwelling)
+		// rebuild the hash later ("{building}-{sensorID}-{dwelling}").
+		key := fmt.Sprintf("%s-%s-%s", building, sensorID, dwelling)
 
 		sensorMap[key] = models.SensorInfo{
 			Building: building,
 			Dwelling: fmt.Sprintf("%s %s", building, dwellingUpper),
-			Type:     property, // last property seen for this device; informational only
+			Type:     property,
 		}
+		// Composite key: same shape used by GetIndoorSensorData to
+		// rebuild the hash later ("{sensorID}-{dwelling}").
+		//key := fmt.Sprintf("%s-%s", sensorID, dwelling)
+		//
+		//sensorMap[key] = models.SensorInfo{
+		//	Building: building,
+		//	Dwelling: fmt.Sprintf("%s %s", building, dwellingUpper),
+		//	Type:     property, // last property seen for this device; informational only
+		//}
 	}
 
 	if err := iter.Close(); err != nil {

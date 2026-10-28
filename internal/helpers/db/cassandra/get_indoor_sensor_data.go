@@ -21,6 +21,14 @@ import (
 // always PT15M — coarser aggregations (PT1H, P1D) requested by callers are
 // computed afterwards in Go by ComputeIndoorIndicatorsGrouped, not by
 // switching Cassandra tables.
+//
+// The "am44" segment below is NOT the real building — every hash in this
+// table is stored under the literal "am44" token regardless of which
+// physical building the sensor actually belongs to (confirmed against
+// Cassandra directly). The real building/dwelling for each sensor lives in
+// database.SensorBuildingMap, loaded from internal/data/sensor_building_map_cassandra.json,
+// keyed exactly as "{sensorID}-{dwelling}" (two parts, NOT three — do not
+// try to split out a building segment from this key, there isn't one).
 // hash: https://climres.cat#skyspark-measurement-am44-{sensorID}-{dwelling}-{property}-PT15M
 //
 // dwellings, when non-empty, restricts which dwellings are queried/included

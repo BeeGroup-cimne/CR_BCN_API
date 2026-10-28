@@ -42,25 +42,49 @@ func ComputeIndoorIndicatorsGrouped(
 			continue
 		}
 
-		sensorID := strings.TrimPrefix(r.RowKey[idx+1:], "p:am44:r:")
+		// RowKey: "{ts}~p:{building}:r:{building}-{sensorID}-{dwelling}"
+		rest := r.RowKey[idx+1:]
+		sepIdx := strings.Index(rest, ":r:")
+		if sepIdx == -1 {
+			continue
+		}
+		compositeKey := rest[sepIdx+len(":r:"):]
 
-		info, ok := sensorMap[sensorID]
+		info, ok := sensorMap[compositeKey]
 		if !ok {
 			continue
 		}
+		//idx := strings.IndexByte(r.RowKey, '~')
+		//if idx == -1 {
+		//	continue
+		//}
+		//
+		//ts, err := strconv.ParseInt(r.RowKey[:idx], 10, 64)
+		//if err != nil {
+		//	continue
+		//}
+		//
+		//sensorID := strings.TrimPrefix(r.RowKey[idx+1:], "p:am44:r:")
+		//
+		//info, ok := sensorMap[sensorID]
+		//if !ok {
+		//	continue
+		//}
 
 		t := time.Unix(ts, 0)
 		hour := t.Hour()
 
 		isHSensor := strings.HasSuffix(info.Dwelling, "H")
 
-		if isHSensor && hour >= 8 && hour < 20 {
-			continue
-		}
-		if !isHSensor && (hour < 8 || hour >= 20) {
-			continue
-		}
+		if groupBy == "building" {
 
+			if isHSensor && hour >= 8 && hour < 20 {
+				continue
+			}
+			if !isHSensor && (hour < 8 || hour >= 20) {
+				continue
+			}
+		}
 		groupKey := info.Building
 		if groupBy == "dwelling" {
 			groupKey = info.Dwelling
@@ -95,7 +119,9 @@ func ComputeIndoorIndicatorsGrouped(
 	results := make(map[string][]models.IndoorStats)
 
 	for groupKey, bucketMap := range buckets {
-
+		if groupKey != "AM44" && groupBy == "building" {
+			continue
+		}
 		var stats []models.IndoorStats
 
 		for bucket, acc := range bucketMap {
