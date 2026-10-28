@@ -22,6 +22,20 @@ spec:
           image: 853583158095.dkr.ecr.eu-west-1.amazonaws.com/ecr-crbcn-api:prod
           ports:
             - containerPort: 8090
+          startupProbe: # dona temps a arrencar; mentre falla, les altres no s'executen
+            httpGet: { path: /healthz, port: http }
+            periodSeconds: 5
+            failureThreshold: 36   # fins a 3 min
+          readinessProbe: # treu el pod del Service si falla (no el reinicia)
+            httpGet: { path: /healthz, port: http }   # si només tens un endpoint, fes servir /healthz sino /ready
+            periodSeconds: 10
+            timeoutSeconds: 2
+            failureThreshold: 3
+          livenessProbe: # reinicia el contenidor si falla; superficial, sense BD ni Kafka
+            httpGet: { path: /healthz, port: http }
+            periodSeconds: 20
+            timeoutSeconds: 2
+            failureThreshold: 3
           resources:
             limits:
               cpu: 400m
