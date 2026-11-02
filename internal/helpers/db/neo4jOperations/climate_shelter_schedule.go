@@ -34,8 +34,55 @@ func selectedKeys(m map[string]bool) []string {
 }
 
 func cleanScheduleJson(raw string) string {
-	cleaned := strings.ReplaceAll(raw, "'", `"`)
-	return strings.ReplaceAll(cleaned, "&apos;", "'")
+	s := strings.ReplaceAll(raw, "&apos;", "'")
+	s = strings.ReplaceAll(s, "&quot;", `"`)
+
+	var out strings.Builder
+	out.Grow(len(s))
+	runes := []rune(s)
+
+	for i := 0; i < len(runes); i++ {
+		c := runes[i]
+		if c == '\'' || c == '"' {
+			quote := c
+			var str strings.Builder
+			i++
+			for ; i < len(runes) && runes[i] != quote; i++ {
+				if runes[i] == '\\' && i+1 < len(runes) {
+					i++
+					switch runes[i] {
+					case 'n':
+						str.WriteRune('\n')
+					case 't':
+						str.WriteRune('\t')
+					default:
+						str.WriteRune(runes[i])
+					}
+					continue
+				}
+				str.WriteRune(runes[i])
+			}
+			b, _ := json.Marshal(str.String())
+			out.Write(b)
+			continue
+		}
+
+		rest := string(runes[i:min(i+5, len(runes))])
+		switch {
+		case strings.HasPrefix(rest, "True"):
+			out.WriteString("true")
+			i += 3
+		case strings.HasPrefix(rest, "False"):
+			out.WriteString("false")
+			i += 4
+		case strings.HasPrefix(rest, "None"):
+			out.WriteString("null")
+			i += 3
+		default:
+			out.WriteRune(c)
+		}
+	}
+	return out.String()
 }
 
 func parseScheduleList(raw string) ([]interface{}, error) {
