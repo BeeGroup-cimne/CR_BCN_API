@@ -2,63 +2,35 @@ package neo4jOperations
 
 import (
 	"context"
-	"fmt"
+	"log"
+	"strconv"
+	"time"
+
 	"github.com/im7mortal/UTM"
 	"github.com/neo4j/neo4j-go-driver/v5/neo4j"
 	"go-api/internal/database"
-	"log"
-	"strconv"
-	_ "strconv"
-	"time"
 )
 
 func GetClimateShelterCoordinates(date string, characteristics map[string]bool, buildingType map[string]bool) (map[string][]interface{}, error) {
 
-	query := "MATCH (n:ns1__ClimateSheltersBuildingSpace)-[:geosp__hasGeometry]-(p:geo__Point) "
+	selectedCharacteristics := selectedKeys(characteristics)
+	selectedBuildingType := selectedKeys(buildingType)
 
-	selectedCharacteristics := []string{}
-	for key, value := range characteristics {
-		if value {
-			selectedCharacteristics = append(selectedCharacteristics, key)
-		}
-	}
-	selectedBuildingType := []string{}
-	for key, value := range buildingType {
-		if value {
-			selectedBuildingType = append(selectedBuildingType, key)
-		}
-	}
+	query := "MATCH (n:ns1__ClimateSheltersBuildingSpace)-[:geosp__hasGeometry]-(p:geo__Point) " +
+		climateShelterFilterConditions(selectedCharacteristics, selectedBuildingType) +
+		"RETURN n.ns1__climateShelterId AS id, " +
+		"p.ns1__x_coordinate AS x, p.ns1__y_coordinate AS y, " +
+		"n.ns1__schedule AS schedule"
 
-	if len(selectedCharacteristics) != 0 {
-		query += "WHERE ALL(attr IN $selectedCharacteristics WHERE n[attr] = \"True\") "
-	}
-
-	if len(selectedBuildingType) != 0 {
-		query += "and  n.ns1__type IN $selectedBuildingType "
-	}
-
+	var t time.Time
 	if date != "" {
-		query += "WITH replace(replace(n.ns1__schedule, '&apos;', '\\''), '\\'', '\\\"') AS cleanedJson, " +
-			"date($currentDate) AS currentDate, $weekday AS weekday, $hour AS hour, n, p " +
-			"WITH apoc.convert.fromJsonList(cleanedJson) AS scheduleJson, n, p, currentDate, weekday, hour " +
-			"UNWIND scheduleJson AS outerList " +
-			"UNWIND outerList AS schedule " +
-			"WITH schedule, n, p, currentDate, weekday, hour " +
-			"UNWIND (CASE WHEN size(schedule.periods) = 0 THEN [NULL] ELSE schedule.periods END) AS period " +
-			"WITH schedule, n, p, weekday, hour, period, currentDate " +
-			"WHERE period IS NULL " +
-			"OR (( period.month_start <= period.month_end AND currentDate.month >= period.month_start AND currentDate.month <= period.month_end AND currentDate.day >= period.day_start AND currentDate.day <= period.day_end) " +
-			"OR ( period.month_start > period.month_end AND ( currentDate.month >= period.month_start OR currentDate.month <= period.month_end) AND currentDate.day >= period.day_start AND currentDate.day <= period.day_end)) " +
-			"UNWIND schedule.weekly_profile AS profile " +
-			"WITH profile, n, weekday, hour, p  " +
-			"WHERE weekday IN profile.days " +
-			"UNWIND profile.opening_hours AS opening " +
-			"WITH opening, n, hour, p " +
-			"WHERE ((opening.hour_start <= opening.hour_end AND opening.hour_start <= hour AND opening.hour_end >= hour) " +
-			"OR(opening.hour_start > opening.hour_end AND (hour >= opening.hour_start OR hour <= opening.hour_end))) "
+		var err error
+		t, err = time.Parse(time.RFC3339Nano, date)
+		if err != nil {
+			return nil, err
+		}
 	}
 
-	query += "RETURN apoc.map.fromPairs(collect([n.ns1__climateShelterId, [p.ns1__x_coordinate, p.ns1__y_coordinate]])) AS result"
 	driver, err := database.NewNeo4jDriver()
 	if err != nil {
 		return nil, err
@@ -73,25 +45,11 @@ func GetClimateShelterCoordinates(date string, characteristics map[string]bool, 
 		"selectedBuildingType":    selectedBuildingType,
 	}
 
-	if date != "" {
-		layout := time.RFC3339Nano
-		t, err := time.Parse(layout, date)
-		if err != nil {
-			return nil, err
-		}
-		currentDate := t.Format("2006-01-02")
-		weekday := t.Weekday().String()
-		hour := t.Format("15:04")
-
-		params["currentDate"] = currentDate
-		params["weekday"] = weekday
-		params["hour"] = hour
-	}
-
 	result, err := session.Run(context.Background(), query, params)
 	if err != nil {
 		return nil, err
 	}
+
 	finalMap := make(map[string][]interface{})
 	zoneNumber := 31
 	zoneLetter := "T"
@@ -99,41 +57,50 @@ func GetClimateShelterCoordinates(date string, characteristics map[string]bool, 
 	for result.Next(context.Background()) {
 		record := result.Record()
 
-		mapValue, ok := record.Values[0].(map[string]interface{})
+		idVal, _ := record.Get("id")
+		id, ok := idVal.(string)
 		if !ok {
-			fmt.Println("El valor no es del tipo map[string][]interface{}")
 			continue
 		}
 
-		for innerKey, innerVal := range mapValue {
-			println(innerKey)
-			if slice, ok := innerVal.([]interface{}); ok {
-				if len(slice) >= 2 {
-					easting, ok1 := slice[0].(string)
-					northing, ok2 := slice[1].(string)
-
-					if ok1 && ok2 {
-						f, err := strconv.ParseFloat(easting, 64)
-						f2, err := strconv.ParseFloat(northing, 64)
-						lat, lon, err := UTM.ToLatLon(f, f2, zoneNumber, zoneLetter)
-						if err != nil {
-							log.Fatalf("Error al convertir: %v", err)
-						} else {
-							finalMap[innerKey] = []interface{}{lat, lon}
-						}
-
-					} else {
-						fmt.Println("Los elementos no son strings")
-					}
-				}
-			} else {
-				fmt.Println("innerVal no es []interface{}")
-			}
-
+		if date != "" {
+			raw, _ := record.Get("schedule")
+			rawStr, ok := raw.(string)
 			if !ok {
 				continue
 			}
+			open, err := shelterIsOpenAt(rawStr, t)
+			if err != nil {
+				log.Printf("refugio %s: horario no válido: %v", id, err)
+				continue
+			}
+			if !open {
+				continue
+			}
 		}
+
+		xVal, _ := record.Get("x")
+		yVal, _ := record.Get("y")
+		easting, ok1 := xVal.(string)
+		northing, ok2 := yVal.(string)
+		if !ok1 || !ok2 {
+			log.Printf("refugio %s: coordenadas no son texto", id)
+			continue
+		}
+
+		f, err1 := strconv.ParseFloat(easting, 64)
+		f2, err2 := strconv.ParseFloat(northing, 64)
+		if err1 != nil || err2 != nil {
+			log.Printf("refugio %s: coordenadas no válidas (%q, %q)", id, easting, northing)
+			continue
+		}
+		lat, lon, err := UTM.ToLatLon(f, f2, zoneNumber, zoneLetter)
+		if err != nil {
+			// Antes era log.Fatalf, que paraba toda la API por un solo refugio.
+			log.Printf("refugio %s: error al convertir coordenadas: %v", id, err)
+			continue
+		}
+		finalMap[id] = []interface{}{lat, lon}
 	}
 	if err := result.Err(); err != nil {
 		return nil, err

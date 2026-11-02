@@ -2,21 +2,17 @@ package neo4jOperations
 
 import (
 	"context"
+	"fmt"
+
 	"github.com/neo4j/neo4j-go-driver/v5/neo4j"
 	"go-api/internal/database"
-	_ "strconv"
 )
 
 func GetFilteredClimateShelterDetailsById(id string) (map[string]interface{}, error) {
 
-	query := "MATCH (n:ns1__ClimateSheltersBuildingSpace) where n.ns1__climateShelterId = $id " +
-		"WITH replace(replace(n.ns1__schedule, '&apos;', '\\''), '\\'', '\\\"') AS cleanedJson, n " +
-		"WITH apoc.convert.fromJsonList(cleanedJson) AS scheduleJson, n " +
-		"UNWIND scheduleJson AS outerList " +
-		"UNWIND outerList AS schedule " +
-		"WITH schedule, n "
-
-	query += "RETURN n { .*, schedule: schedule} AS result"
+	query := "MATCH (n:ns1__ClimateSheltersBuildingSpace) " +
+		"WHERE n.ns1__climateShelterId = $id " +
+		"RETURN properties(n) AS props"
 
 	driver, err := database.NewNeo4jDriver()
 	if err != nil {
@@ -35,18 +31,32 @@ func GetFilteredClimateShelterDetailsById(id string) (map[string]interface{}, er
 	if err != nil {
 		return nil, err
 	}
+
 	finalResult := map[string]interface{}{}
 	for result.Next(context.Background()) {
-		record := result.Record()
-
-		value, ok := record.Get("result")
-		if ok {
-			strValue, ok := value.(map[string]interface{})
-			if ok {
-				finalResult = strValue
-			}
+		value, ok := result.Record().Get("props")
+		if !ok {
+			continue
+		}
+		props, ok := value.(map[string]interface{})
+		if !ok {
+			continue
 		}
 
+		raw, _ := props["ns1__schedule"].(string)
+		schedules, err := parseScheduleList(raw)
+		if err != nil {
+			return nil, fmt.Errorf("horario no válido en el refugio %s: %w", id, err)
+		}
+
+		for _, s := range schedules {
+			row := make(map[string]interface{}, len(props)+1)
+			for k, v := range props {
+				row[k] = v
+			}
+			row["schedule"] = s
+			finalResult = row
+		}
 	}
 
 	if err := result.Err(); err != nil {
